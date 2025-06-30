@@ -14,7 +14,7 @@ export default function HelpCenter() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Home')}>
           <Ionicons name="arrow-back" size={28} color="#222" />
         </TouchableOpacity>
         <View style={styles.topBarRight}>
@@ -72,7 +72,7 @@ export default function HelpCenter() {
         </TouchableOpacity>
       </View>
       {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={styles.backBtnText}>Back</Text>
       </TouchableOpacity>
     </ScrollView>

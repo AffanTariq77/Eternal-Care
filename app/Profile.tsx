@@ -9,7 +9,7 @@ export default function Profile() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Home')}>
           <Ionicons name="arrow-back" size={28} color="#222" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/HelpCenter')}>
@@ -31,7 +31,7 @@ export default function Profile() {
       <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Address</Text><Text style={styles.fieldValue}>64-A Lawrence Road Lahore</Text></View>
       <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Payment</Text><Text style={styles.fieldValue}>Debit Card</Text></View>
       {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={styles.backBtnText}>Back</Text>
       </TouchableOpacity>
     </ScrollView>

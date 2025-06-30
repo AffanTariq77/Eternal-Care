@@ -1,7 +1,8 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Drawer } from 'expo-router/drawer';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -19,14 +20,41 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="Login" options={{ headerShown: false }} />
-        <Stack.Screen name="SignUp" options={{ headerShown: false }} />
-        <Stack.Screen name="main/(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Drawer
+          screenOptions={{ headerShown: true }}
+        >
+          <Drawer.Screen
+            name="main/(tabs)"
+            options={{
+              drawerLabel: 'Home',
+              title: 'Home',
+            }}
+          />
+          <Drawer.Screen
+            name="GraveyardBooking"
+            options={{
+              drawerLabel: 'Booking',
+              title: 'Booking',
+            }}
+          />
+          <Drawer.Screen
+            name="Profile"
+            options={{
+              drawerLabel: 'Profile',
+              title: 'Profile',
+            }}
+          />
+          <Drawer.Screen
+            name="HelpCenter"
+            options={{
+              drawerLabel: 'Help',
+              title: 'Help',
+            }}
+          />
+        </Drawer>
+        <StatusBar style="auto" />
+      </GestureHandlerRootView>
     </ThemeProvider>
   );
 }

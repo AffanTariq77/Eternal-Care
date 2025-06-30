@@ -13,7 +13,7 @@ export default function PaymentDetails() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/BookingDetails')}>
           <Ionicons name="arrow-back" size={28} color="#222" />
         </TouchableOpacity>
         <View style={styles.topBarRight}>

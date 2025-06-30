@@ -25,7 +25,7 @@ export default function QuranRecitation() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Home')}>
           <Ionicons name="arrow-back" size={28} color="#222" />
         </TouchableOpacity>
         <View style={styles.topBarRight}>
@@ -88,7 +88,7 @@ export default function QuranRecitation() {
           </Picker>
         </View>
       </View>
-      <TouchableOpacity style={styles.bookNowBtn} onPress={() => router.push('/BookingDetails')}>
+      <TouchableOpacity style={styles.bookNowBtn} onPress={() => router.push({ pathname: '/BookingDetails', params: { source: 'QuranRecitation' } })}>
         <Text style={styles.bookNowBtnText}>Book Now</Text>
       </TouchableOpacity>
     </ScrollView>

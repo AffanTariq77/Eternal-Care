@@ -15,7 +15,7 @@ export default function GraveyardBooking() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Home')}>
           <Ionicons name="arrow-back" size={28} color="#222" />
         </TouchableOpacity>
         <View style={styles.topBarRight}>
@@ -103,7 +103,7 @@ export default function GraveyardBooking() {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity style={styles.bookNowBtn} onPress={() => router.push('/BookingDetails')}>
+      <TouchableOpacity style={styles.bookNowBtn} onPress={() => router.push({ pathname: '/BookingDetails', params: { source: 'GraveyardBooking' } })}>
         <Text style={styles.bookNowBtnText}>Book Now</Text>
       </TouchableOpacity>
     </ScrollView>

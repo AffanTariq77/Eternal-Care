@@ -1,5 +1,6 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -24,6 +25,7 @@ const services = [
 
 export default function Home() {
   const router = useRouter();
+  const navigation = useNavigation();
   const [showFilter, setShowFilter] = useState(false);
   const [city, setCity] = useState('');
   const [area, setArea] = useState('');
@@ -33,7 +35,7 @@ export default function Home() {
     <View style={styles.container}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
           <Feather name="menu" size={28} color="#222" />
         </TouchableOpacity>
         <View style={styles.topBarRight}>

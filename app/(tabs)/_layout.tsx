@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
@@ -6,25 +6,24 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
         tabBarActiveTintColor: '#0a3d3d',
       }}
     >
       <Tabs.Screen
-        name="Home"
+        name="GraveCareService"
         options={{
-          title: 'Home',
+          title: 'Grave Care',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+            <MaterialCommunityIcons name={focused ? 'broom' : 'broom'} size={24} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="GraveyardBooking"
+        name="HelpCenter"
         options={{
-          title: 'Booking',
+          title: 'Support',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'book' : 'book-outline'} size={24} color={color} />
+            <Ionicons name={focused ? 'headset' : 'headset-outline'} size={24} color={color} />
           ),
         }}
       />
@@ -33,16 +32,25 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+            <Ionicons name={focused ? 'person-circle' : 'person-circle-outline'} size={28} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="HelpCenter"
+        name="GraveyardBooking"
         options={{
-          title: 'Help',
+          title: 'Booking',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'headset' : 'headset-outline'} size={24} color={color} />
+            <FontAwesome5 name={focused ? 'book-open' : 'book'} size={22} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="QuranRecitation"
+        options={{
+          title: 'Quran',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons name={focused ? 'book-open-variant' : 'book-outline'} size={24} color={color} />
           ),
         }}
       />

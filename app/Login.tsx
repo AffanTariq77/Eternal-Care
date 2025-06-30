@@ -39,7 +39,7 @@ export default function Login() {
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.loginBtn}>
+        <TouchableOpacity style={styles.loginBtn} onPress={() => router.replace('/Home')}>
           <Text style={styles.loginBtnText}>LOG IN</Text>
         </TouchableOpacity>
         <Text style={styles.orText}>OR LOGIN WITH</Text>

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -7,12 +7,25 @@ export default function BookingDetails() {
   const [saveInfo, setSaveInfo] = useState(true);
   const [acceptTerms, setAcceptTerms] = useState(true);
   const router = useRouter();
+  const { source } = useLocalSearchParams();
+
+  const handleBack = () => {
+    if (source === 'GraveyardBooking') {
+      router.replace('/GraveyardBooking');
+    } else if (source === 'QuranRecitation') {
+      router.replace('/QuranRecitation');
+    } else if (source === 'GraveCareService') {
+      router.replace('/GraveCareService');
+    } else {
+      router.back();
+    }
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={handleBack}>
           <Ionicons name="arrow-back" size={28} color="#222" />
         </TouchableOpacity>
         <View style={styles.topBarRight}>

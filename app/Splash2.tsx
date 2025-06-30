@@ -8,7 +8,7 @@ const { width } = Dimensions.get('window');
 export default function Splash2() {
   const router = useRouter();
   const handleNext = () => {
-    router.replace('/Home');
+    router.replace('/Login');
   };
 
   return (
