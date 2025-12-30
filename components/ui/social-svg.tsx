@@ -63,7 +63,7 @@ export default function SocialSvg({ source, size = 36 }: Props) {
         height={"100%" as any}
         // ensure svg scales to fill and gets clipped on iOS
         preserveAspectRatio="xMidYMid slice"
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
       />
     </View>
   );
