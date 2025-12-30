@@ -12,18 +12,10 @@ import {
 import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
 
-export default function QuranRecitation() {
+export default function GraveCare() {
   const router = useRouter();
-  const [selected, setSelected] = useState({
-    day: "15",
-    month: "March",
-    time: "4:00 pm",
-  });
+  const [selected, setSelected] = useState<string>("1 day");
   // search and header use normal layout flow now
-
-  const pick = (key: "day" | "month" | "time", value: string) => {
-    setSelected((s) => ({ ...s, [key]: value }));
-  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -61,76 +53,44 @@ export default function QuranRecitation() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.bannerWrap}>
+        <View style={[styles.bannerWrap]}>
           <View style={styles.bannerInner}>
             <SocialSvg
-              source={require("../assets/images/quran-recitation.svg")}
+              source={require("../assets/images/grave-care.svg")}
               size={"100%"}
-              style={{ borderRadius: 12 }}
+              style={{ borderRadius: 20 }}
             />
           </View>
         </View>
 
-        <Text style={styles.title}>Quran Recitation</Text>
+        <Text style={styles.title}>Grave Care Service</Text>
         <Text style={styles.desc}>
-          We provide dignified Quran and Dua recitation services to offer peace,
-          blessings, and spiritual comfort. Each recitation is delivered with
-          sincerity and devotion, bringing solace during moments of remembrance.
+          We offer professional grave cleaning and maintenance services carried
+          out with the utmost respect and care. Our team ensures each resting
+          place is kept clean, dignified, and well-maintained. We understand the
+          emotional value of these sites and treat every grave with the
+          reverence it deserves.
         </Text>
 
-        <Text style={styles.bookHeading}>Book a Slot</Text>
+        <Text style={styles.bookHeading}>Book a Package</Text>
 
         <View style={styles.selectorRow}>
-          <Pressable
-            style={[
-              styles.option,
-              selected.day === "15" && styles.optionActive,
-            ]}
-            onPress={() => pick("day", "15")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selected.day === "15" && styles.optionTextActive,
-              ]}
+          {["1 day", "Weekly", "Monthly"].map((s) => (
+            <Pressable
+              key={s}
+              onPress={() => setSelected(s)}
+              style={[styles.option, selected === s && styles.optionActive]}
             >
-              15
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.option,
-              selected.month === "March" && styles.optionActive,
-            ]}
-            onPress={() => pick("month", "March")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selected.month === "March" && styles.optionTextActive,
-              ]}
-            >
-              March
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.option,
-              selected.time === "4:00 pm" && styles.optionActive,
-            ]}
-            onPress={() => pick("time", "4:00 pm")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selected.time === "4:00 pm" && styles.optionTextActive,
-              ]}
-            >
-              4:00 pm
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.optionText,
+                  selected === s && styles.optionTextActive,
+                ]}
+              >
+                {s}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <Pressable
@@ -138,9 +98,9 @@ export default function QuranRecitation() {
           onPress={() => {
             const { setBooking } = require("../utils/bookingStore");
             setBooking({
-              service: "Quran Recitation",
-              detail: "Quran Recitation Slot",
-              price: "15000",
+              service: "Grave Care",
+              detail: "Meadow Cemetary",
+              price: "57000",
             });
             (router as any).push("/Form");
           }}
@@ -173,7 +133,7 @@ const styles = StyleSheet.create({
   backText: { color: "#fff", fontWeight: "700" },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 12 },
   content: { paddingHorizontal: 20, alignItems: "center", paddingBottom: 30 },
-  searchWrapStatic: { paddingHorizontal: 18, marginTop: 12 },
+  searchWrapStatic: { paddingHorizontal: 18, marginTop: 18 },
   // (searchBar width merged into main searchBar definition below)
   searchWrap: {
     position: "absolute",
@@ -201,24 +161,31 @@ const styles = StyleSheet.create({
   searchIcons: { flexDirection: "row", gap: 12, marginLeft: 8 },
   bannerWrap: {
     width: "100%",
-    borderRadius: 12,
+    borderRadius: 20,
     overflow: "hidden",
     marginTop: 12,
     alignItems: "center",
   },
   bannerInner: {
     width: "100%",
-    height: 180,
+    height: 160,
     overflow: "hidden",
-    borderRadius: 12,
+    borderRadius: 20,
   },
-  title: { fontSize: 20, fontWeight: "800", marginTop: 12 },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginTop: 16,
+    textAlign: "center",
+  },
   desc: {
     color: "#333",
     textAlign: "center",
-    marginTop: 10,
-    lineHeight: 22,
-    paddingHorizontal: 6,
+    marginTop: 14,
+    lineHeight: 24,
+    paddingHorizontal: 20,
+    fontSize: 15,
+    maxWidth: 760,
   },
   bookHeading: { marginTop: 18, fontWeight: "800", fontSize: 18 },
   selectorRow: { flexDirection: "row", marginTop: 14 },
@@ -227,7 +194,7 @@ const styles = StyleSheet.create({
     borderColor: "#164A40",
     paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 8,
     backgroundColor: "transparent",
   },

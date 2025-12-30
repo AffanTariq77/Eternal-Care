@@ -1,29 +1,46 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
-import Splash2 from './Splash2';
+import { Asset } from "expo-asset";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { SvgUri } from "react-native-svg";
 
-export default function SplashScreen({ navigation }: any) {
-  const [showSecond, setShowSecond] = useState(false);
+export default function SplashScreen() {
+  const [svgUri, setSvgUri] = useState<string | null>(null);
+  const router = useRouter();
 
-  if (showSecond) {
-    return <Splash2 />;
-  }
-
-  const handleNext = () => {
-    setShowSecond(true);
-  };
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const asset = Asset.fromModule(
+          require("../assets/images/Eternal-Care-logo-black3.svg")
+        );
+        await asset.downloadAsync();
+        const uri = (asset as any).localUri ?? asset.uri;
+        if (mounted) setSvgUri(uri ?? null);
+      } catch (e) {
+        if (mounted) setSvgUri(null);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/images/Eternal Care logo black.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
-        <Ionicons name="arrow-forward" size={28} color="#fff" />
-      </TouchableOpacity>
+      {svgUri ? (
+        <View style={styles.logo}>
+          <SvgUri uri={svgUri} width="100%" height="100%" />
+        </View>
+      ) : (
+        <View style={styles.logo} />
+      )}
+
+      <Pressable style={styles.button} onPress={() => router.push("/second")}>
+        <View style={styles.chevron} />
+      </Pressable>
     </View>
   );
 }
@@ -31,22 +48,33 @@ export default function SplashScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   logo: {
-    width: 320,
-    height: 320,
-    marginBottom: 60,
+    width: 250,
+    height: 250,
+    opacity: 1,
+    transform: [{ rotate: "0deg" }],
+    marginBottom: 80,
   },
   button: {
-    position: 'absolute',
-    bottom: 60,
-    backgroundColor: '#0a3d3d',
-    borderRadius: 25,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#114A3A",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
   },
-}); 
+  chevron: {
+    width: 20,
+    height: 20,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+    marginLeft: -4,
+    borderColor: "#FFFFFF",
+    transform: [{ rotate: "-45deg" }],
+  },
+});

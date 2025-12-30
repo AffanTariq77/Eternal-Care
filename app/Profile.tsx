@@ -1,52 +1,201 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from "expo-router";
+import React from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import SocialSvg from "../components/ui/social-svg";
+import { Colors } from "../constants/theme";
 
 export default function Profile() {
   const router = useRouter();
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.replace('/Home')}>
-          <Ionicons name="arrow-back" size={28} color="#222" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/HelpCenter')}>
-          <Ionicons name="headset-outline" size={24} color="#222" />
-        </TouchableOpacity>
-      </View>
-      {/* Avatar and Edit */}
-      <View style={styles.avatarSection}>
-        <Image source={{ uri: 'https://randomuser.me/api/portraits/men/32.jpg' }} style={styles.avatar} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-          <Text style={styles.editLabel}>Edit Profile</Text>
-          <Feather name="edit-2" size={16} color="#0a3d3d" style={{ marginLeft: 6 }} />
-        </View>
-      </View>
-      {/* Profile Fields */}
-      <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Name</Text><Text style={styles.fieldValue}>Muhammad John</Text></View>
-      <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Email</Text><Text style={styles.fieldValue}>john786@gmail.com</Text></View>
-      <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Phone</Text><Text style={styles.fieldValue}>+44 7413 013779</Text></View>
-      <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Address</Text><Text style={styles.fieldValue}>64-A Lawrence Road Lahore</Text></View>
-      <View style={styles.fieldBox}><Text style={styles.fieldLabel}>Payment</Text><Text style={styles.fieldValue}>Debit Card</Text></View>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backBtnText}>Back</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <Pressable style={styles.back} onPress={() => router.back()}>
+              <Text style={styles.backChevron}>{"<"}</Text>
+            </Pressable>
+            <View style={styles.headerRightSmall}>
+              <SocialSvg
+                source={require("../assets/images/bell.svg")}
+                size={20}
+              />
+            </View>
+          </View>
+
+          <View style={styles.avatarWrap}>
+            <View style={styles.avatarCircle}>
+              <SocialSvg
+                source={require("../assets/images/profile.svg")}
+                size={80}
+              />
+            </View>
+            <Text style={styles.editTitle}>Edit Profile</Text>
+            <Pressable
+              style={styles.editIcon}
+              onPress={() => {
+                /* edit action */
+              }}
+            >
+              <SocialSvg
+                source={require("../assets/images/edit.svg")}
+                size={18}
+              />
+            </Pressable>
+          </View>
+
+          <View style={styles.rows}>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Name</Text>
+              <Text
+                style={styles.rowValue}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                Muhammad John
+              </Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Email</Text>
+              <Text
+                style={styles.rowValue}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                john786@gmail.com
+              </Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Phone</Text>
+              <Text
+                style={styles.rowValue}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                +44 7413 013779
+              </Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Address</Text>
+              <Text
+                style={styles.rowValue}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                64-A Lawrence Road Lahore
+              </Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Payment</Text>
+              <Text
+                style={styles.rowValue}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                Debit Card
+              </Text>
+            </View>
+          </View>
+
+          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={styles.backBtnText}>Back</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 18, paddingBottom: 8 },
-  avatarSection: { alignItems: 'center', marginTop: 12, marginBottom: 18 },
-  avatar: { width: 90, height: 90, borderRadius: 45, borderWidth: 3, borderColor: '#eee' },
-  editLabel: { color: '#0a3d3d', fontWeight: 'bold', fontSize: 16 },
-  fieldBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#0a3d3d', borderRadius: 12, marginHorizontal: 18, marginBottom: 16, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#fff' },
-  fieldLabel: { fontWeight: 'bold', color: '#0a3d3d', fontSize: 15, width: 90 },
-  fieldValue: { color: '#222', fontSize: 15, marginLeft: 8, flex: 1 },
-  backBtn: { backgroundColor: '#0a3d3d', borderRadius: 10, marginHorizontal: 100, marginTop: 18, paddingVertical: 12, alignItems: 'center' },
-  backBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-}); 
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.light.background || "#fff",
+    paddingTop: 28,
+    paddingHorizontal: 28,
+  },
+  container: { paddingBottom: 120 },
+  back: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 20,
+  },
+  backChevron: { color: "#fff", fontWeight: "700" },
+  header: {
+    width: "95%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    marginTop: 25,
+  },
+  headerRightSmall: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  avatarWrap: { alignItems: "center", marginTop: 28, marginBottom: 18 },
+  avatarCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#d7efe6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editTitle: {
+    marginTop: 20,
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#164A40",
+  },
+  editIcon: { marginTop: 8 },
+  rows: { marginTop: 12, alignItems: "center" },
+  row: {
+    width: "90%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: "#164A40",
+    marginBottom: 12,
+  },
+  rowLabel: { fontWeight: "800", fontSize: 18 },
+  rowValue: { color: "#333", fontSize: 16, flexShrink: 1, textAlign: "right" },
+  backBtn: {
+    alignSelf: "center",
+    marginTop: 18,
+    backgroundColor: "#164A40",
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 24,
+  },
+  backBtnText: { color: "#fff" },
+});

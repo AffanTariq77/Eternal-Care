@@ -12,18 +12,10 @@ import {
 import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
 
-export default function QuranRecitation() {
+export default function GraveBooking() {
   const router = useRouter();
-  const [selected, setSelected] = useState({
-    day: "15",
-    month: "March",
-    time: "4:00 pm",
-  });
+  const [selectedPlot, setSelectedPlot] = useState("F8");
   // search and header use normal layout flow now
-
-  const pick = (key: "day" | "month" | "time", value: string) => {
-    setSelected((s) => ({ ...s, [key]: value }));
-  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -64,73 +56,41 @@ export default function QuranRecitation() {
         <View style={styles.bannerWrap}>
           <View style={styles.bannerInner}>
             <SocialSvg
-              source={require("../assets/images/quran-recitation.svg")}
+              source={require("../assets/images/grave-booking.svg")}
               size={"100%"}
               style={{ borderRadius: 12 }}
             />
           </View>
         </View>
 
-        <Text style={styles.title}>Quran Recitation</Text>
+        {/* no floating filter card - layout matches QuranRecitation */}
+
+        <Text style={styles.title}>Meadow Cemetary</Text>
         <Text style={styles.desc}>
-          We provide dignified Quran and Dua recitation services to offer peace,
-          blessings, and spiritual comfort. Each recitation is delivered with
-          sincerity and devotion, bringing solace during moments of remembrance.
+          Meadow Cemetary offers a serene and respectful final resting place
+          amidst nature's quiet beauty. Designed for peace and remembrance, it
+          provides thoughtfully maintained grounds for honoring loved ones.
         </Text>
 
-        <Text style={styles.bookHeading}>Book a Slot</Text>
+        <Text style={styles.bookHeading}>Book a Plot</Text>
 
         <View style={styles.selectorRow}>
-          <Pressable
-            style={[
-              styles.option,
-              selected.day === "15" && styles.optionActive,
-            ]}
-            onPress={() => pick("day", "15")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selected.day === "15" && styles.optionTextActive,
-              ]}
+          {["F8", "D5", "N6", "C2"].map((p) => (
+            <Pressable
+              key={p}
+              onPress={() => setSelectedPlot(p)}
+              style={[styles.option, selectedPlot === p && styles.optionActive]}
             >
-              15
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.option,
-              selected.month === "March" && styles.optionActive,
-            ]}
-            onPress={() => pick("month", "March")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selected.month === "March" && styles.optionTextActive,
-              ]}
-            >
-              March
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.option,
-              selected.time === "4:00 pm" && styles.optionActive,
-            ]}
-            onPress={() => pick("time", "4:00 pm")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selected.time === "4:00 pm" && styles.optionTextActive,
-              ]}
-            >
-              4:00 pm
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedPlot === p && styles.optionTextActive,
+                ]}
+              >
+                {p}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <Pressable
@@ -138,9 +98,9 @@ export default function QuranRecitation() {
           onPress={() => {
             const { setBooking } = require("../utils/bookingStore");
             setBooking({
-              service: "Quran Recitation",
-              detail: "Quran Recitation Slot",
-              price: "15000",
+              service: "Grave Booking",
+              detail: "Meadow Cemetary Plot no. F8",
+              price: "57000",
             });
             (router as any).push("/Form");
           }}
@@ -173,8 +133,6 @@ const styles = StyleSheet.create({
   backText: { color: "#fff", fontWeight: "700" },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 12 },
   content: { paddingHorizontal: 20, alignItems: "center", paddingBottom: 30 },
-  searchWrapStatic: { paddingHorizontal: 18, marginTop: 12 },
-  // (searchBar width merged into main searchBar definition below)
   searchWrap: {
     position: "absolute",
     left: 18,
@@ -183,6 +141,8 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     elevation: 1000,
   },
+  searchWrapStatic: { paddingHorizontal: 18, marginTop: 12 },
+  // ensure search bar stretches
   searchBar: {
     width: "100%",
     borderWidth: 1,
@@ -200,7 +160,7 @@ const styles = StyleSheet.create({
   searchPlaceholder: { color: "#999", flex: 1 },
   searchIcons: { flexDirection: "row", gap: 12, marginLeft: 8 },
   bannerWrap: {
-    width: "100%",
+    width: "90%",
     borderRadius: 12,
     overflow: "hidden",
     marginTop: 12,
