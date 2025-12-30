@@ -48,3 +48,40 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## How to run this project (clone + run)
+
+Below are quick steps to get this project running locally on macOS (zsh). These instructions assume you have Node.js installed. If you prefer yarn, replace `npm` with `yarn`.
+
+1. Clone the repository
+
+   ```bash
+   git clone https://github.com/AffanTariq77/Eternal-Care.git
+   cd Eternal-Care
+   ```
+
+2. Install dependencies
+
+   ```bash
+   npm install
+   # or
+   # yarn install
+   ```
+
+3. Start the development server (Expo)
+
+   ```bash
+   npx expo start
+   ```
+
+   This opens the Expo dev tools in your browser and prints a QR code. From here you can:
+
+   - Run on an Android emulator (select "Run on Android device/emulator")
+   - Run on an iOS simulator (select "Run on iOS simulator") — requires Xcode on macOS
+   - Scan the QR code with Expo Go on a physical device
+
+Notes:
+
+- If you see permission or path issues with `npx`, try installing the Expo CLI globally: `npm install -g expo-cli` (optional).
+- For iOS simulator testing you need Xcode and its command line tools installed.
+- If you intend to build a production app, read Expo's docs on building and submitting: https://docs.expo.dev/build-reference/introduction/
