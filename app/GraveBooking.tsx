@@ -2,14 +2,15 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
 export default function GraveBooking() {
@@ -25,10 +26,7 @@ export default function GraveBooking() {
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
         <View style={styles.headerRight}>
-          <SocialSvg
-            source={require("../assets/images/profile.svg")}
-            size={36}
-          />
+          <AvatarButton size={36} />
           <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
         </View>
       </View>
@@ -97,10 +95,13 @@ export default function GraveBooking() {
           style={styles.bookBtn}
           onPress={() => {
             const { setBooking } = require("../utils/bookingStore");
+            const next = new Date(); next.setDate(next.getDate() + 1);
             setBooking({
               service: "Grave Booking",
-              detail: "Meadow Cemetary Plot no. F8",
+              detail: `Meadow Cemetary Plot no. ${selectedPlot}`,
               price: "57000",
+              packageId: `plot_${selectedPlot}`,
+              date: next.toISOString(),
             });
             (router as any).push("/Form");
           }}

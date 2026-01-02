@@ -1,7 +1,7 @@
-import { Asset } from "expo-asset";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { SvgUri } from "react-native-svg";
+import { getCachedAssetUri } from "../../utils/assetCache";
 
 type Props = {
   source: any; // require(...) of svg
@@ -9,40 +9,23 @@ type Props = {
   style?: any;
 };
 
-export default function SocialSvg({ source, size = 36 }: Props) {
-  const [uri, setUri] = useState<string | null>(null);
-  const styleProp = (arguments[0] as any)?.style ?? null;
+export default function SocialSvg({ source, size = 36, style }: Props) {
+  // Use useMemo to get cached URI instantly (synchronous, no state updates)
+  // This ensures SVG renders immediately when component mounts
+  const uri = useMemo(() => getCachedAssetUri(source), [source]);
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const asset = Asset.fromModule(source);
-        await asset.downloadAsync();
-        const u = (asset as any).localUri ?? asset.uri;
-        if (mounted) setUri(u ?? null);
-      } catch (e) {
-        if (mounted) setUri(null);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [source]);
-
+  // If URI is not available (shouldn't happen if assets are preloaded), return null
+  // This prevents placeholder flicker and ensures SVGs appear instantly
   if (!uri) {
-    const placeholderStyle: any =
-      typeof size === "number"
-        ? { width: size, height: size, borderRadius: Number(size) / 2 }
-        : { width: "100%", height: "100%" };
-    return <View style={[styles.placeholder, placeholderStyle, styleProp]} />;
+    // Return null instead of placeholder to avoid layout shift
+    // Assets should always be preloaded, so this is a fallback
+    return null;
   }
 
   // Wrap SvgUri in a clipping View so borderRadius is enforced across renderers.
   const clipStyle: any = {};
-  if (styleProp && styleProp.borderRadius)
-    clipStyle.borderRadius = styleProp.borderRadius;
+  if (style && style.borderRadius)
+    clipStyle.borderRadius = style.borderRadius;
   else if (typeof size === "number") clipStyle.borderRadius = Number(size) / 2;
 
   return (
@@ -54,7 +37,7 @@ export default function SocialSvg({ source, size = 36 }: Props) {
           height: typeof size === "number" ? size : "100%",
           borderRadius: clipStyle.borderRadius,
         },
-        styleProp,
+        style,
       ]}
     >
       <SvgUri

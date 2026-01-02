@@ -2,17 +2,20 @@ import { useRouter } from "expo-router";
 import React from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
 export default function Home() {
   const router = useRouter();
+  const [menuVisible, setMenuVisible] = React.useState(false);
 
   const Card = ({
     title,
@@ -43,10 +46,23 @@ export default function Home() {
     </View>
   );
 
+  const onLogout = async () => {
+    try {
+      const { clearToken } = await import('../utils/authStore');
+      await clearToken();
+    } catch (e) {
+      console.warn('Failed to clear token', e);
+    }
+    setMenuVisible(false);
+    (router as any).replace('/Login');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.menu}>≡</Text>
+        <Pressable onPress={() => setMenuVisible(true)}>
+          <Text style={styles.menu}>≡</Text>
+        </Pressable>
         <View style={styles.headerRight}>
           <Pressable
             style={styles.iconWrap}
@@ -57,15 +73,9 @@ export default function Home() {
               size={22}
             />
           </Pressable>
-          <Pressable
-            style={styles.profileWrap}
-            onPress={() => (router as any).push("/Profile")}
-          >
-            <SocialSvg
-              source={require("../assets/images/profile.svg")}
-              size={20}
-            />
-          </Pressable>
+          <View style={{ marginHorizontal: 6 }}>
+            <AvatarButton size={36} />
+          </View>
           <View style={styles.iconWrap}>
             <SocialSvg
               source={require("../assets/images/bell.svg")}
@@ -74,6 +84,23 @@ export default function Home() {
           </View>
         </View>
       </View>
+
+      {/* Menu modal */}
+      <Modal visible={menuVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
+          <View style={styles.menuBox}>
+            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/Home'); }}>
+              <Text style={styles.menuItemText}>Home</Text>
+            </Pressable>
+            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/Profile'); }}>
+              <Text style={styles.menuItemText}>Profile</Text>
+            </Pressable>
+            <Pressable style={styles.menuItem} onPress={onLogout}>
+              <Text style={[styles.menuItemText, { color: '#d33' }]}>Logout</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       <ScrollView
         contentContainerStyle={styles.container}
@@ -228,4 +255,8 @@ const styles = StyleSheet.create({
   },
   bookBtnText: { color: "#fff" },
   itemImg: { width: 90, height: 70, marginLeft: 12 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-start' },
+  menuBox: { marginTop: 60, marginLeft: 12, width: 160, backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, elevation: 6, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8 },
+  menuItem: { paddingVertical: 12, paddingHorizontal: 14 },
+  menuItemText: { fontSize: 16, color: '#111' },
 });

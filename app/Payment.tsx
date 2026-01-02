@@ -2,16 +2,19 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   View,
+  ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import api from "./utils/api";
 
 export default function Payment() {
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function Payment() {
   const [cvv, setCvv] = useState("");
   const [visaSelected, setVisaSelected] = useState(true);
   const [saveCard, setSaveCard] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [bypassing, setBypassing] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -32,10 +37,7 @@ export default function Payment() {
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
         <View style={styles.headerRight}>
-          <SocialSvg
-            source={require("../assets/images/profile.svg")}
-            size={36}
-          />
+          <AvatarButton size={36} />
           <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
         </View>
       </View>
@@ -118,10 +120,163 @@ export default function Payment() {
 
           <View style={styles.confirmWrap}>
             <Pressable
-              style={styles.confirmBtn}
-              onPress={() => (router as any).push("/BookingConfirmed")}
+              style={[styles.confirmBtn, (paying || bypassing) && styles.confirmBtnDisabled]}
+              onPress={async () => {
+                if (paying || bypassing) return;
+                setPaying(true);
+                try {
+                  if (!params.id) return alert('Booking id missing. Please go back and try again.');
+
+                  // Ensure booking exists and belongs to user; retry a few times if needed
+                  let bookingExists = false;
+                  for (let i = 0; i < 3; i++) {
+                    try {
+                      await api.getBooking(params.id);
+                      bookingExists = true;
+                      break;
+                    } catch (e: any) {
+                      console.log('getBooking attempt', i, 'error', e?.error || e?.message || e);
+                      // if 404, wait and retry, otherwise rethrow
+                      if (e?.error === 'Not found') {
+                        await new Promise((r) => setTimeout(r, 250));
+                        continue;
+                      }
+                      throw e;
+                    }
+                  }
+
+                  // If booking still missing, try to recreate with data from store and use new id
+                  if (!bookingExists) {
+                    console.log('Booking not found on server — attempting auto-recreate');
+                    alert('Booking not found on server — attempting to re-create it and continue payment.');
+                    // try to re-create booking from stored params
+                    let resp: any = null;
+                    try {
+                      resp = await api.createBooking(params.packageId || params.packageId, params.date || params.date, params);
+                    } catch (e: any) {
+                      console.warn('Auto-recreate booking failed', e?.error || e?.message || e);
+                      return alert('Booking not found and auto-recreate failed: ' + (e?.error || e?.message || 'unknown'));
+                    }
+
+                    if (resp && resp.booking && resp.booking.id) {
+                      const { setBooking } = require('../utils/bookingStore');
+                      setBooking({ ...params, id: resp.booking.id });
+                      params.id = resp.booking.id;
+                      console.log('Auto-recreated booking with id', params.id);
+                      alert('Booking re-created, proceeding with payment.');
+                    } else {
+                      console.warn('Auto-recreate booking response missing id', resp);
+                      return alert('Booking not found and auto-recreate failed');
+                    }
+                  }
+
+                  try {
+                    await api.payBooking(params.id, { amount: params.price || 0, method: 'card' });
+                    (router as any).push('/BookingConfirmed');
+                  } catch (e: any) {
+                    console.warn('payBooking failed', e);
+                    // If server returned Not found, try to re-create booking and retry once
+                    if (e?.error === 'Not found') {
+                      try {
+                        alert('Booking not found on server — attempting to re-create and retry payment');
+                        const resp = await api.createBooking(params.packageId || params.packageId, params.date || params.date, params);
+                        if (resp && resp.booking && resp.booking.id) {
+                          const { setBooking } = require('../utils/bookingStore');
+                          setBooking({ ...params, id: resp.booking.id });
+                          params.id = resp.booking.id;
+                          await api.payBooking(params.id, { amount: params.price || 0, method: 'card' });
+                          (router as any).push('/BookingConfirmed');
+                          return;
+                        }
+                        return alert('Payment failed: Booking re-create did not return an id');
+                      } catch (re: any) {
+                        console.warn('Retry pay after recreate failed', re);
+                        return alert('Payment failed after recreate: ' + (re?.error || re?.message || 'unknown'));
+                      }
+                    }
+                    return alert('Payment failed: ' + (e?.error || e?.message || 'unknown'));
+                  }
+                } catch (err: any) {
+                  alert(err?.error || err?.message || 'Payment failed');
+                } finally {
+                  setPaying(false);
+                }
+              }}
+              disabled={paying || bypassing}
             >
-              <Text style={styles.confirmText}>Confirm Payment</Text>
+              {paying ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Confirm Payment</Text>}
+            </Pressable>
+
+            <Pressable
+              style={[styles.confirmBtn, (paying || bypassing) && styles.confirmBtnDisabled, { marginTop: 12, backgroundColor: '#A00' }]}
+              onPress={async () => {
+                if (paying || bypassing) return;
+                setBypassing(true);
+                try {
+                  if (!params.id) return alert('Booking id missing. Please go back and try again.');
+
+                  // Ensure booking exists and belongs to user; retry a few times if needed
+                  let bookingExists = false;
+                  for (let i = 0; i < 3; i++) {
+                    try {
+                      await api.getBooking(params.id);
+                      bookingExists = true;
+                      break;
+                    } catch (e: any) {
+                      if (e?.error === 'Not found') {
+                        await new Promise((r) => setTimeout(r, 250));
+                        continue;
+                      }
+                      throw e;
+                    }
+                  }
+
+                  if (!bookingExists) {
+                    const resp = await api.createBooking(params.packageId || params.packageId, params.date || params.date, params);
+                    if (resp && resp.booking && resp.booking.id) {
+                      const { setBooking } = require('../utils/bookingStore');
+                      setBooking({ ...params, id: resp.booking.id });
+                      params.id = resp.booking.id;
+                    } else {
+                      return alert('Booking not found and auto-recreate failed');
+                    }
+                  }
+
+                  // Bypass payment for testing — hard-coded
+                  try {
+                    await api.payBooking(params.id, { amount: params.price || 0, method: 'bypass', bypass: true, receipt: { note: 'Test bypass payment' } });
+                    (router as any).push('/BookingConfirmed');
+                  } catch (e: any) {
+                    console.warn('bypass pay failed', e);
+                    if (e?.error === 'Not found') {
+                      try {
+                        alert('Booking not found on server — attempting to re-create and retry bypass payment');
+                        const resp = await api.createBooking(params.packageId || params.packageId, params.date || params.date, params);
+                        if (resp && resp.booking && resp.booking.id) {
+                          const { setBooking } = require('../utils/bookingStore');
+                          setBooking({ ...params, id: resp.booking.id });
+                          params.id = resp.booking.id;
+                          await api.payBooking(params.id, { amount: params.price || 0, method: 'bypass', bypass: true, receipt: { note: 'Test bypass payment' } });
+                          (router as any).push('/BookingConfirmed');
+                          return;
+                        }
+                        return alert('Bypass failed: Booking re-create did not return an id');
+                      } catch (re: any) {
+                        console.warn('Retry bypass after recreate failed', re);
+                        return alert('Bypass failed after recreate: ' + (re?.error || re?.message || 'unknown'));
+                      }
+                    }
+                    return alert(e?.error || e?.message || 'Bypass failed');
+                  }
+                } catch (err: any) {
+                  alert(err?.error || err?.message || 'Bypass failed');
+                } finally {
+                  setBypassing(false);
+                }
+              }}
+              disabled={paying || bypassing}
+            >
+              {bypassing ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Bypass Payment (TEST)</Text>}
             </Pressable>
           </View>
         </View>
@@ -207,6 +362,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     minWidth: 180,
     alignItems: "center",
+  },
+  confirmBtnDisabled: {
+    opacity: 0.6,
   },
   confirmText: { color: "#fff", fontWeight: "700" },
 });

@@ -2,47 +2,113 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   View,
+  ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
 export default function Form() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    cnic: "",
-    address: "",
-    city: "",
-    postal: "",
-  });
+  // Use separate local state per input to avoid re-render interruptions while typing
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [cnic, setCnic] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [postal, setPostal] = useState("");
   const [saveInfo, setSaveInfo] = useState(true);
   const [agree, setAgree] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   // booking info (set by Book Now buttons) will be read from bookingStore when needed
 
-  const Input: React.FC<{
-    placeholder: string;
-    value: string;
-    onChange: (v: string) => void;
-  }> = ({ placeholder, value, onChange }) => (
+  // Refs to keep latest typed value without forcing re-renders. These capture typing immediately
+  const nameRef = React.useRef<string>(name);
+  const emailRef = React.useRef<string>(email);
+  const phoneRef = React.useRef<string>(phone);
+  const cnicRef = React.useRef<string>(cnic);
+  const addressRef = React.useRef<string>(address);
+  const cityRef = React.useRef<string>(city);
+  const postalRef = React.useRef<string>(postal);
+
+  // Package & date selection for users who arrive at Form directly
+  const PACKAGES = [
+    { id: 'pkg_basic', label: 'Basic', price: 100 },
+    { id: 'pkg_standard', label: 'Standard', price: 250 },
+    { id: 'pkg_premium', label: 'Premium', price: 500 },
+  ];
+  const [selectedPackage, setSelectedPackage] = React.useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
+
+  // Refs for editable package/date fields (uncontrolled)
+  const packageRef = React.useRef<string>('');
+  const dateRef = React.useRef<string>('');
+
+  // pre-populate from bookingStore if available
+  React.useEffect(() => {
+    try {
+      const { getBooking } = require('../utils/bookingStore');
+      const prev = getBooking();
+      if (prev && prev.packageId) {
+        setSelectedPackage(prev.packageId);
+        packageRef.current = prev.packageId;
+      }
+      if (prev && prev.date) {
+        setSelectedDate(prev.date);
+        dateRef.current = prev.date;
+      }
+    } catch (e) {}
+  }, []);
+
+
+
+// Uncontrolled Input — keep typed text in a ref and only commit to state on blur
+const Input: React.FC<{
+  placeholder: string;
+  defaultValue?: string;
+  valueRef: React.MutableRefObject<string>;
+  onBlurCommit?: (v: string) => void;
+  keyboardType?: any;
+}> = React.memo(({ placeholder, defaultValue, valueRef, onBlurCommit, keyboardType }) => {
+  // log renders and focus to help debug interruptions
+  React.useEffect(() => {
+    console.log('Render Input', placeholder, (defaultValue || '').length);
+  }, [placeholder, defaultValue]);
+
+  return (
     <View style={styles.inputWrap}>
       <TextInput
         placeholder={placeholder}
         placeholderTextColor="#9AA"
-        value={value}
-        onChangeText={onChange}
+        defaultValue={defaultValue}
+        onChangeText={(v) => {
+          // update ref only (no state updates) to avoid re-renders while typing
+          valueRef.current = v;
+          console.log('Form input change (ref)', placeholder, v);
+        }}
+        onFocus={() => console.log('Input focus', placeholder)}
+        onBlur={() => {
+          console.log('Input blur', placeholder, valueRef.current);
+          if (onBlurCommit) onBlurCommit(valueRef.current);
+        }}
         style={styles.input}
+        autoCorrect={false}
+        autoCapitalize="none"
+        importantForAutofill="no"
+        keyboardType={keyboardType}
       />
     </View>
   );
+});
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -52,52 +118,74 @@ export default function Form() {
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
         <View style={styles.headerRight}>
-          <SocialSvg
-            source={require("../assets/images/profile.svg")}
-            size={36}
-          />
+          <AvatarButton size={36} />
           <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
         <Text style={styles.heading}>EnterYour details</Text>
 
         <View style={styles.box}>
           <Input
             placeholder="Your Full Name"
-            value={form.name}
-            onChange={(v) => setForm((s) => ({ ...s, name: v }))}
+            defaultValue={name}
+            valueRef={nameRef}
+            onBlurCommit={setName}
           />
           <Input
             placeholder="Your Email"
-            value={form.email}
-            onChange={(v) => setForm((s) => ({ ...s, email: v }))}
+            defaultValue={email}
+            valueRef={emailRef}
+            onBlurCommit={setEmail}
+            keyboardType="email-address"
           />
           <Input
             placeholder="Your Phone Number"
-            value={form.phone}
-            onChange={(v) => setForm((s) => ({ ...s, phone: v }))}
+            defaultValue={phone}
+            valueRef={phoneRef}
+            onBlurCommit={setPhone}
+            keyboardType="phone-pad"
           />
           <Input
             placeholder="Your CNIC Number"
-            value={form.cnic}
-            onChange={(v) => setForm((s) => ({ ...s, cnic: v }))}
+            defaultValue={cnic}
+            valueRef={cnicRef}
+            onBlurCommit={setCnic}
           />
           <Input
             placeholder="Your Address"
-            value={form.address}
-            onChange={(v) => setForm((s) => ({ ...s, address: v }))}
+            defaultValue={address}
+            valueRef={addressRef}
+            onBlurCommit={setAddress}
           />
           <Input
             placeholder="Your City"
-            value={form.city}
-            onChange={(v) => setForm((s) => ({ ...s, city: v }))}
+            defaultValue={city}
+            valueRef={cityRef}
+            onBlurCommit={setCity}
           />
           <Input
             placeholder="Postal Code"
-            value={form.postal}
-            onChange={(v) => setForm((s) => ({ ...s, postal: v }))}
+            defaultValue={postal}
+            valueRef={postalRef}
+            onBlurCommit={setPostal}
+            keyboardType="numeric"
+          />
+
+          {/* Package & Date fields — editable text fields instead of inline pickers */}
+          <Input
+            placeholder="Package (e.g. Basic, gravecare_1d or pkg_basic)"
+            defaultValue={packageRef.current || selectedPackage || undefined}
+            valueRef={packageRef as any}
+            onBlurCommit={(v) => { packageRef.current = v; setSelectedPackage(v || null); }}
+          />
+
+          <Input
+            placeholder="Date (ISO or YYYY-MM-DD)"
+            defaultValue={dateRef.current || (selectedDate ? new Date(selectedDate).toISOString() : undefined)}
+            valueRef={dateRef as any}
+            onBlurCommit={(v) => { dateRef.current = v; setSelectedDate(v || null); }}
           />
 
           <View style={styles.checkboxRow}>
@@ -126,20 +214,64 @@ export default function Form() {
 
           <View style={styles.nextWrap}>
             <Pressable
-              style={styles.nextBtn}
-              onPress={() => {
-                const {
-                  setBooking,
-                  getBooking,
-                } = require("../utils/bookingStore");
-                const prev = getBooking();
-                setBooking({ ...prev, ...form });
-                (router as any).push("/Payment");
+              style={[styles.nextBtn, submitting && styles.nextBtnDisabled]}
+              onPress={async () => {
+                if (submitting) return;
+                setSubmitting(true);
+                try {
+                  const api = require('./utils/api').default;
+                  const {
+                    setBooking,
+                    getBooking,
+                  } = require("../utils/bookingStore");
+                  const prev = getBooking();
+                  console.log('Form prev booking', prev);
+                  // Read current values from refs (captures latest typed chars even if blur didn't fire)
+                  const merged = {
+                    ...prev,
+                    // take edited refs first, then inline selection, then prev
+                    packageId: (packageRef.current && packageRef.current.trim()) || selectedPackage || prev?.packageId,
+                    date: (dateRef.current && dateRef.current.trim()) || selectedDate || prev?.date,
+                    name: nameRef.current || name,
+                    email: emailRef.current || email,
+                    phone: phoneRef.current || phone,
+                    cnic: cnicRef.current || cnic,
+                    address: addressRef.current || address,
+                    city: cityRef.current || city,
+                    postal: postalRef.current || postal,
+                  };
+
+                  // Client-side validation for required booking fields
+                  console.log('Creating booking with', { packageId: merged.packageId, date: merged.date, packageRef: packageRef.current, dateRef: dateRef.current, selectedPackage, selectedDate });
+                  if (!merged.packageId || !merged.date) {
+                    const missing: string[] = [];
+                    if (!merged.packageId) missing.push('package');
+                    if (!merged.date) missing.push('date');
+                    alert('Please select ' + missing.join(' and ') + ' before continuing');
+                    return;
+                  }
+
+                  // create booking on server with status 'pending' and include form as meta
+                  const resp = await api.createBooking(merged.packageId, merged.date, merged);
+                  const booking = resp && resp.booking ? resp.booking : null;
+                  if (booking && booking.id) {
+                    setBooking({ ...merged, id: booking.id, status: booking.status });
+                  } else {
+                    // fallback to local store id if server didn't return id
+                    setBooking(merged);
+                  }
+                  (router as any).push("/Payment");
+                } catch (err: any) {
+                  alert(err?.error || err?.message || 'Failed to save booking');
+                } finally {
+                  setSubmitting(false);
+                }
               }}
+              disabled={submitting}
             >
-              <Text style={styles.nextText}>Next</Text>
+              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next</Text>}
             </Pressable>
-          </View>
+          </View> 
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -203,5 +335,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
+  nextBtnDisabled: { opacity: 0.6 },
   nextText: { color: "#fff", fontWeight: "700" },
 });

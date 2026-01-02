@@ -2,12 +2,12 @@ import { useRouter } from "expo-router";
 import React from "react";
 import {
   Pressable,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../constants/theme";
 
 export default function BookingConfirmed() {

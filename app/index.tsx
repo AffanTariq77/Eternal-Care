@@ -1,41 +1,23 @@
-import { Asset } from "expo-asset";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { SvgUri } from "react-native-svg";
+import { getCachedAssetUri } from "../utils/assetCache";
+
+const logoSource = require("../assets/images/Eternal-Care-logo-black3.svg");
 
 export default function SplashScreen() {
-  const [svgUri, setSvgUri] = useState<string | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const asset = Asset.fromModule(
-          require("../assets/images/Eternal-Care-logo-black3.svg")
-        );
-        await asset.downloadAsync();
-        const uri = (asset as any).localUri ?? asset.uri;
-        if (mounted) setSvgUri(uri ?? null);
-      } catch (e) {
-        if (mounted) setSvgUri(null);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // Get cached URI instantly using useMemo (synchronous, no state updates)
+  // Asset is preloaded at app startup, so this will always be available
+  const svgUri = useMemo(() => getCachedAssetUri(logoSource), []);
 
   return (
     <View style={styles.container}>
-      {svgUri ? (
+      {svgUri && (
         <View style={styles.logo}>
           <SvgUri uri={svgUri} width="100%" height="100%" />
         </View>
-      ) : (
-        <View style={styles.logo} />
       )}
 
       <Pressable style={styles.button} onPress={() => router.push("/second")}>

@@ -4,12 +4,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
 
@@ -28,9 +29,11 @@ export default function Profile() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Pressable style={styles.back} onPress={() => router.back()}>
-              <Text style={styles.backChevron}>{"<"}</Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Pressable style={styles.back} onPress={() => router.back()}>
+                <Text style={styles.backChevron}>{"<"}</Text>
+              </Pressable>
+            </View>
             <View style={styles.headerRightSmall}>
               <SocialSvg
                 source={require("../assets/images/bell.svg")}
@@ -40,12 +43,7 @@ export default function Profile() {
           </View>
 
           <View style={styles.avatarWrap}>
-            <View style={styles.avatarCircle}>
-              <SocialSvg
-                source={require("../assets/images/profile.svg")}
-                size={80}
-              />
-            </View>
+            <AvatarButton size={120} />
             <Text style={styles.editTitle}>Edit Profile</Text>
             <Pressable
               style={styles.editIcon}
@@ -141,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 20,
+    marginLeft: 8,
   },
   backChevron: { color: "#fff", fontWeight: "700" },
   header: {
@@ -198,4 +196,5 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   backBtnText: { color: "#fff" },
+
 });

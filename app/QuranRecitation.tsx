@@ -2,14 +2,15 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
 export default function QuranRecitation() {
@@ -33,10 +34,7 @@ export default function QuranRecitation() {
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
         <View style={styles.headerRight}>
-          <SocialSvg
-            source={require("../assets/images/profile.svg")}
-            size={36}
-          />
+          <AvatarButton size={36} />
           <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
         </View>
       </View>
@@ -137,10 +135,15 @@ export default function QuranRecitation() {
           style={styles.bookBtn}
           onPress={() => {
             const { setBooking } = require("../utils/bookingStore");
+            // construct a packageId from the selected slot and default date to next day
+            const pkg = `quran_${selected.day}_${selected.month}_${selected.time.replace(/\s/g,'')}`;
+            const next = new Date(); next.setDate(next.getDate() + 1);
             setBooking({
               service: "Quran Recitation",
               detail: "Quran Recitation Slot",
               price: "15000",
+              packageId: pkg,
+              date: next.toISOString(),
             });
             (router as any).push("/Form");
           }}

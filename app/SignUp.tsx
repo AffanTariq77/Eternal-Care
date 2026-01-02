@@ -10,9 +10,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
+import api from "./utils/api";
+import { saveToken } from "../utils/authStore";
 
 export default function Signup() {
   const router = useRouter();
@@ -20,6 +23,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   return (
     <KeyboardAvoidingView
@@ -113,11 +117,35 @@ export default function Signup() {
             </View>
 
             <Pressable
-              style={styles.actionBtn}
-              onPress={() => (router as any).push("/Home")}
+              style={[styles.actionBtn, loading && { opacity: 0.7 }]}
+              disabled={loading}
+              onPress={async () => {
+                if (loading) return;
+                setLoading(true);
+                try {
+                  const res = await api.signup(name, email, password);
+                  await saveToken(res.token);
+                  // register push token in background (non-blocking)
+                  import('../lib/pushHelper').then(async (m) => {
+                    const token = await m.getExpoPushToken();
+                    if (token) {
+                      try {
+                        await api.registerToken(token);
+                      } catch (e) {
+                        console.warn('Failed to register push token', e);
+                      }
+                    }
+                  }).catch(() => {});
+                  (router as any).push('/Home');
+                } catch (err: any) {
+                  alert(err?.error || err?.message || 'Signup failed');
+                } finally {
+                  setLoading(false);
+                }
+              }}
             >
-              <Text style={styles.actionText}>SIGN UP</Text>
-            </Pressable>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.actionText}>SIGN UP</Text>}
+            </Pressable>  
 
             <Text style={styles.orText}>OR LOGIN WITH</Text>
 

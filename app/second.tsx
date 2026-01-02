@@ -1,38 +1,21 @@
-import { Asset } from "expo-asset";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SvgUri } from "react-native-svg";
+import { getCachedAssetUri } from "../utils/assetCache";
+
+const logoSource = require("../assets/images/Eternal-Care-logo-black3.svg");
 
 export default function SecondSplash() {
-  const [svgUri, setSvgUri] = useState<string | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const asset = Asset.fromModule(
-          require("../assets/images/Eternal-Care-logo-black3.svg")
-        );
-        await asset.downloadAsync();
-        // localUri exists on native, fallback to uri
-        const uri = (asset as any).localUri ?? asset.uri;
-        if (mounted) setSvgUri(uri ?? null);
-      } catch (e) {
-        if (mounted) setSvgUri(null);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // Get cached URI instantly using useMemo (synchronous, no state updates)
+  // Asset is preloaded at app startup, so this will always be available
+  const svgUri = useMemo(() => getCachedAssetUri(logoSource), []);
 
   return (
     <View style={styles.container}>
       {/* Top graphic (tree) - positioned to mimic the reference */}
-      {svgUri ? (
+      {svgUri && (
         <View style={styles.topGraphic} pointerEvents="none">
           {/* scale the svg and nudge it so only the right portion (tree) shows */}
           <SvgUri uri={svgUri} width={720} height={560} />
@@ -42,7 +25,7 @@ export default function SecondSplash() {
             */}
           <View style={styles.maskRect} pointerEvents="none" />
         </View>
-      ) : null}
+      )}
 
       <View style={styles.content}>
         <Text style={styles.smallTitle}>OUR MOTTO</Text>

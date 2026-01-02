@@ -2,14 +2,15 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
 export default function GraveCare() {
@@ -25,10 +26,7 @@ export default function GraveCare() {
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
         <View style={styles.headerRight}>
-          <SocialSvg
-            source={require("../assets/images/profile.svg")}
-            size={36}
-          />
+          <AvatarButton size={36} />
           <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
         </View>
       </View>
@@ -97,10 +95,16 @@ export default function GraveCare() {
           style={styles.bookBtn}
           onPress={() => {
             const { setBooking } = require("../utils/bookingStore");
+            // Map UI selection to packageId and provide a sensible default date (next day)
+            const map: Record<string,string> = { '1 day':'gravecare_1d', 'Weekly':'gravecare_weekly', 'Monthly':'gravecare_monthly' };
+            const pkg = map[selected] || 'gravecare_custom';
+            const next = new Date(); next.setDate(next.getDate() + 1);
             setBooking({
               service: "Grave Care",
               detail: "Meadow Cemetary",
               price: "57000",
+              packageId: pkg,
+              date: next.toISOString(),
             });
             (router as any).push("/Form");
           }}
