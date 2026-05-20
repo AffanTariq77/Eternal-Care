@@ -59,4 +59,70 @@ export async function payBooking(bookingId: string, body: any) {
   return request(`/bookings/${bookingId}/pay`, { method: 'POST', body: JSON.stringify(body) });
 }
 
-export default { signup, login, getProfile, registerToken, createBooking, getBooking, payBooking };
+export async function getGraveyards(lat?: number, lng?: number, radius = 10) {
+  const q = lat != null && lng != null ? `?lat=${lat}&lng=${lng}&radius=${radius}` : '';
+  return request(`/graveyards${q}`);
+}
+
+export async function getGraveyard(id: string) {
+  return request(`/graveyards/${id}`);
+}
+
+export async function getPlots(graveyardId: string) {
+  return request(`/graveyards/${graveyardId}/plots`);
+}
+
+export async function searchGraves(query: string) {
+  return request(`/graves/search?q=${encodeURIComponent(query)}`);
+}
+
+export async function getServiceProviders(type?: string) {
+  const q = type ? `?type=${encodeURIComponent(type)}` : '';
+  return request(`/service-providers${q}`);
+}
+
+export async function getServiceProvider(id: string) {
+  return request(`/service-providers/${id}`);
+}
+
+export async function getUserBookings() {
+  return request('/bookings/me');
+}
+
+export async function cancelBooking(id: string) {
+  return request(`/bookings/${id}/cancel`, { method: 'POST' });
+}
+
+export async function updateProfile(data: any) {
+  return request('/users/me', { method: 'PATCH', body: JSON.stringify(data) });
+}
+
+// Admin endpoints
+export async function adminGetGraveyards() { return request('/admin/graveyards'); }
+export async function adminCreateGraveyard(data: any) { return request('/admin/graveyards', { method: 'POST', body: JSON.stringify(data) }); }
+export async function adminUpdateGraveyard(id: string, data: any) { return request(`/admin/graveyards/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+export async function adminDeleteGraveyard(id: string) { return request(`/admin/graveyards/${id}`, { method: 'DELETE' }); }
+
+export async function adminGetPlots(graveyardId: string) { return request(`/admin/graveyards/${graveyardId}/plots`); }
+export async function adminCreatePlot(graveyardId: string, data: any) { return request(`/admin/graveyards/${graveyardId}/plots`, { method: 'POST', body: JSON.stringify(data) }); }
+export async function adminUpdatePlot(id: string, data: any) { return request(`/admin/plots/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+
+export async function adminGetBookings(filters?: any) {
+  const q = filters ? '?' + new URLSearchParams(filters).toString() : '';
+  return request(`/admin/bookings${q}`);
+}
+export async function adminUpdateBooking(id: string, data: any) { return request(`/admin/bookings/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+
+export async function adminGetProviders() { return request('/admin/service-providers'); }
+export async function adminCreateProvider(data: any) { return request('/admin/service-providers', { method: 'POST', body: JSON.stringify(data) }); }
+export async function adminUpdateProvider(id: string, data: any) { return request(`/admin/service-providers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+export async function adminDeleteProvider(id: string) { return request(`/admin/service-providers/${id}`, { method: 'DELETE' }); }
+
+export async function adminGetDeceased() { return request('/admin/deceased'); }
+export async function adminCreateDeceased(data: any) { return request('/admin/deceased', { method: 'POST', body: JSON.stringify(data) }); }
+export async function adminUpdateDeceased(id: string, data: any) { return request(`/admin/deceased/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+
+export async function adminGetReports(from: string, to: string) { return request(`/admin/reports?from=${from}&to=${to}`); }
+export async function adminGetDashboard() { return request('/admin/dashboard'); }
+
+export default { signup, login, getProfile, registerToken, createBooking, getBooking, payBooking, getGraveyards, getGraveyard, getPlots, searchGraves, getServiceProviders, getServiceProvider, getUserBookings, cancelBooking, updateProfile };

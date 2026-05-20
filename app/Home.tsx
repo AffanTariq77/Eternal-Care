@@ -95,6 +95,18 @@ export default function Home() {
             <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/Profile'); }}>
               <Text style={styles.menuItemText}>Profile</Text>
             </Pressable>
+            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/BookingHistory'); }}>
+              <Text style={styles.menuItemText}>My Bookings</Text>
+            </Pressable>
+            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/GraveSearch'); }}>
+              <Text style={styles.menuItemText}>Grave Search</Text>
+            </Pressable>
+            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/Notifications'); }}>
+              <Text style={styles.menuItemText}>Notifications</Text>
+            </Pressable>
+            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/admin/AdminDashboard'); }}>
+              <Text style={styles.menuItemText}>Admin Panel</Text>
+            </Pressable>
             <Pressable style={styles.menuItem} onPress={onLogout}>
               <Text style={[styles.menuItemText, { color: '#d33' }]}>Logout</Text>
             </Pressable>
@@ -107,7 +119,7 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.searchCard}>
-          <View style={styles.searchBar}>
+          <Pressable style={styles.searchBar} onPress={() => (router as any).push("/GraveSearch")}>
             <Text style={styles.searchPlaceholder}>Search graveyard.....</Text>
             <View style={styles.searchIconWrap}>
               <SocialSvg
@@ -115,17 +127,17 @@ export default function Home() {
                 size={18}
               />
             </View>
-          </View>
+          </Pressable>
 
           <Card
-            title="Respectful Booking"
+            title="Grave Booking"
             desc="Seamless grave booking services with respect and care for your loved ones."
             svg={require("../assets/images/booking.svg")}
             size={140}
           >
             <Pressable
               style={styles.bookBtn}
-              onPress={() => (router as any).push("/GraveBooking")}
+              onPress={() => (router as any).push("/NearbyGraveyards")}
             >
               <Text style={styles.bookBtnText}>Book Now</Text>
             </Pressable>
@@ -139,7 +151,7 @@ export default function Home() {
           >
             <Pressable
               style={styles.bookBtn}
-              onPress={() => (router as any).push("/QuranRecitation")}
+              onPress={() => (router as any).push("/ReciterList")}
             >
               <Text style={styles.bookBtnText}>Book Now</Text>
             </Pressable>
@@ -153,9 +165,7 @@ export default function Home() {
           >
             <Pressable
               style={styles.bookBtn}
-              onPress={() => {
-                (router as any).push("/GraveCare");
-              }}
+              onPress={() => (router as any).push("/GraveCareDetail")}
             >
               <Text style={styles.bookBtnText}>Book Now</Text>
             </Pressable>
