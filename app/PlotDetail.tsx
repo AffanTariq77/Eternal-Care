@@ -28,7 +28,14 @@ export default function PlotDetail() {
       plotCode,
       price: price || "15000",
     });
-    (router as any).push("/Form");
+    (router as any).push({
+      pathname: "/PaymentScreen",
+      params: {
+        amount: price || "15000",
+        description: `Grave Booking — Plot ${plotCode}, ${graveyardName}`,
+        returnPath: "/Home",
+      },
+    });
   };
 
   return (

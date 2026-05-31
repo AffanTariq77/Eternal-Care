@@ -3,6 +3,7 @@ import React, { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/theme";
+import { adminCreateDeceased, adminUpdateDeceased } from "../utils/api";
 
 export default function DeceasedForm() {
   const router = useRouter();
@@ -23,17 +24,19 @@ export default function DeceasedForm() {
     if (!nameRef.current.trim()) { alert("Full name is required."); return; }
     setSaving(true);
     try {
-      const payload = {
-        name: nameRef.current.trim(),
-        cnic: cnicRef.current.trim(),
-        dateOfBirth: dobRef.current.trim(),
-        dateOfBurial: burialDateRef.current.trim(),
-        plotCode: plotCodeRef.current.trim(),
-        graveyardId: graveyardIdRef.current.trim(),
-        familyContact: familyContactRef.current.trim(),
+      const payload: any = {
+        full_name: nameRef.current.trim(),
+        cnic: cnicRef.current.trim() || undefined,
+        date_of_birth: dobRef.current.trim() || undefined,
+        date_of_burial: burialDateRef.current.trim() || undefined,
+        plot_id: graveyardIdRef.current.trim() || undefined,
+        family_contact: familyContactRef.current.trim() || undefined,
       };
-      // TODO: mode === 'edit' ? api.adminUpdateDeceased(id, payload) : api.adminCreateDeceased(payload)
-      await new Promise((r) => setTimeout(r, 400));
+      if (mode === 'edit' && id) {
+        await adminUpdateDeceased(id, payload);
+      } else {
+        await adminCreateDeceased(payload);
+      }
       (router as any).back();
     } catch (e: any) {
       alert(e?.error || "Failed to save.");

@@ -57,7 +57,14 @@ export default function GraveCareDetail() {
       date: selectedDay,
       price: String(pkg.price),
     });
-    (router as any).push("/Form");
+    (router as any).push({
+      pathname: "/PaymentScreen",
+      params: {
+        amount: String(pkg.price),
+        description: `Memorial Care — ${pkg.label}`,
+        returnPath: "/Home",
+      },
+    });
   };
 
   return (

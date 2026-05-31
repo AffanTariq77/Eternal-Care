@@ -1,19 +1,12 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import { adminGetPlots } from "../utils/api";
 
-interface Plot { id: string; code: string; status: string; price: number; section: string }
-
-// TODO: fetch from api.adminGetPlots(graveyardId). For now show all plots across graveyards.
-const MOCK_PLOTS: Plot[] = [
-  { id: "p1", code: "A1", status: "available", price: 15000, section: "Section A" },
-  { id: "p2", code: "A2", status: "occupied", price: 15000, section: "Section A" },
-  { id: "p3", code: "B1", status: "reserved", price: 16000, section: "Section B" },
-  { id: "p4", code: "B2", status: "available", price: 16000, section: "Section B" },
-  { id: "p5", code: "C1", status: "occupied", price: 14000, section: "Section C" },
-];
+interface Plot { id: string; code: string; status: string; price: number; section: string; graveyard_id: string }
 
 const STATUS_COLOR: Record<string, string> = {
   available: "#22c55e", occupied: "#ef4444", reserved: "#f59e0b",
@@ -24,9 +17,27 @@ export default function ManagePlots() {
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setTimeout(() => { setPlots(MOCK_PLOTS); setLoading(false); }, 400);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      (async () => {
+        try {
+          const raw: any[] = await adminGetPlots();
+          if (active) setPlots(raw.map((p) => ({
+            id: p.id,
+            code: p.plot_code || p.code || '',
+            status: p.status || 'available',
+            price: parseFloat(p.price) || 0,
+            section: p.section || '',
+            graveyard_id: p.graveyard_id || '',
+          })));
+        } catch { /* show empty */ }
+        if (active) setLoading(false);
+      })();
+      return () => { active = false; };
+    }, [])
+  );
 
   const handleDelete = (id: string) => {
     Alert.alert("Remove Plot", "Remove this plot from the system?", [
@@ -62,7 +73,7 @@ export default function ManagePlots() {
               <View style={styles.actions}>
                 <Pressable
                   style={styles.editBtn}
-                  onPress={() => (router as any).push({ pathname: "/admin/PlotForm", params: { mode: "edit", id: item.id, code: item.code, status: item.status, price: String(item.price) } })}
+                  onPress={() => (router as any).push({ pathname: "/admin/PlotForm", params: { mode: "edit", id: item.id, code: item.code, status: item.status, price: String(item.price), graveyard_id: item.graveyard_id } })}
                 >
                   <Text style={styles.editText}>Edit</Text>
                 </Pressable>

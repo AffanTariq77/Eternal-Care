@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -20,6 +21,29 @@ export default function Support() {
   const [last, setLast] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSend = useCallback(async () => {
+    if (!first.trim() || !email.trim() || !message.trim()) {
+      Alert.alert("Missing fields", "Please fill in your name, email, and message.");
+      return;
+    }
+    setSending(true);
+    try {
+      const API = process.env.EXPO_PUBLIC_API_URL ?? "";
+      await fetch(`${API}/support`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `${first} ${last}`.trim(), email, message }),
+      });
+      Alert.alert("Sent", "Your message has been received. We'll be in touch shortly.");
+      setFirst(""); setLast(""); setEmail(""); setMessage("");
+    } catch {
+      Alert.alert("Error", "Could not send your message. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  }, [first, last, email, message]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -89,12 +113,11 @@ export default function Support() {
 
             <View style={styles.formButtons}>
               <Pressable
-                style={styles.sendBtn}
-                onPress={() => {
-                  /* send logic */
-                }}
+                style={[styles.sendBtn, sending && { opacity: 0.6 }]}
+                onPress={handleSend}
+                disabled={sending}
               >
-                <Text style={styles.sendText}>Send</Text>
+                <Text style={styles.sendText}>{sending ? "Sending..." : "Send"}</Text>
               </Pressable>
 
               <Pressable style={styles.backBtn} onPress={() => router.back()}>

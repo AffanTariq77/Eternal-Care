@@ -17,7 +17,7 @@ import {
 import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
 import api from "./utils/api";
-import { saveToken } from "../utils/authStore";
+import { saveToken, saveUser } from "../utils/authStore";
 
 export default function Login() {
   const router = useRouter();
@@ -155,15 +155,14 @@ export default function Login() {
                   try {
                     const res = await api.login(email, password);
                     await saveToken(res.token);
+                    if (res.user) await saveUser(res.user);
                     // register push token in background (non-blocking)
                     import('../lib/pushHelper').then(async (m) => {
                       const token = await m.getExpoPushToken();
                       if (token) {
                         try {
                           await api.registerToken(token);
-                        } catch (e) {
-                          console.warn('Failed to register push token', e);
-                        }
+                        } catch { /* non-critical */ }
                       }
                     }).catch(() => {});
                     (router as any).push('/Home');
@@ -243,6 +242,7 @@ export default function Login() {
                   try {
                     const res = await api.signup(name, email, password);
                     await saveToken(res.token);
+                    if (res.user) await saveUser(res.user);
                     (router as any).push('/Home');
                   } catch (err: any) {
                     alert(err?.error || err?.message || 'Signup failed');

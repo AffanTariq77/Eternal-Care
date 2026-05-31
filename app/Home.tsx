@@ -12,10 +12,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import { isAdmin, clearUser } from "../utils/authStore";
 
 export default function Home() {
   const router = useRouter();
   const [menuVisible, setMenuVisible] = React.useState(false);
+  const [adminUser, setAdminUser] = React.useState(false);
+
+  React.useEffect(() => {
+    isAdmin().then(setAdminUser);
+  }, []);
 
   const Card = ({
     title,
@@ -50,9 +56,8 @@ export default function Home() {
     try {
       const { clearToken } = await import('../utils/authStore');
       await clearToken();
-    } catch (e) {
-      console.warn('Failed to clear token', e);
-    }
+      await clearUser();
+    } catch { /* non-critical */ }
     setMenuVisible(false);
     (router as any).replace('/Login');
   };
@@ -104,9 +109,11 @@ export default function Home() {
             <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/Notifications'); }}>
               <Text style={styles.menuItemText}>Notifications</Text>
             </Pressable>
-            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/admin/AdminDashboard'); }}>
-              <Text style={styles.menuItemText}>Admin Panel</Text>
-            </Pressable>
+            {adminUser && (
+              <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); (router as any).push('/admin/AdminDashboard'); }}>
+                <Text style={styles.menuItemText}>Admin Panel</Text>
+              </Pressable>
+            )}
             <Pressable style={styles.menuItem} onPress={onLogout}>
               <Text style={[styles.menuItemText, { color: '#d33' }]}>Logout</Text>
             </Pressable>

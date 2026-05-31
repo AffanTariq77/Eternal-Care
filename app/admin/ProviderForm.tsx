@@ -3,6 +3,7 @@ import React, { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/theme";
+import { adminCreateProvider, adminUpdateProvider } from "../utils/api";
 
 const TYPES = [
   { key: "quran_recitation", label: "Quran Recitation" },
@@ -26,8 +27,11 @@ export default function ProviderForm() {
     setSaving(true);
     try {
       const payload = { name: nameRef.current.trim(), type, contact: contactRef.current.trim(), price: Number(priceRef.current) || 0 };
-      // TODO: mode === 'edit' ? api.adminUpdateProvider(id, payload) : api.adminCreateProvider(payload)
-      await new Promise((r) => setTimeout(r, 400));
+      if (mode === 'edit' && id) {
+        await adminUpdateProvider(id, payload);
+      } else {
+        await adminCreateProvider(payload);
+      }
       (router as any).back();
     } catch (e: any) {
       alert(e?.error || "Failed to save.");

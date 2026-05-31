@@ -1,35 +1,51 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import { adminGetGraveyards, adminDeleteGraveyard } from "../utils/api";
 
 interface Graveyard { id: string; name: string; city: string; totalPlots: number; availablePlots: number }
-
-// TODO: replace with api.adminGetGraveyards()
-const MOCK: Graveyard[] = [
-  { id: "g1", name: "Karachi Muslim Graveyard", city: "Karachi", totalPlots: 200, availablePlots: 42 },
-  { id: "g2", name: "Gizri Cemetery", city: "Karachi", totalPlots: 120, availablePlots: 18 },
-  { id: "g3", name: "Miani Sahib Graveyard", city: "Lahore", totalPlots: 350, availablePlots: 75 },
-];
 
 export default function ManageGraveyards() {
   const router = useRouter();
   const [items, setItems] = useState<Graveyard[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setTimeout(() => { setItems(MOCK); setLoading(false); }, 400);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      (async () => {
+        try {
+          const raw: any[] = await adminGetGraveyards();
+          if (active) setItems(raw.map((g) => ({
+            id: g.id,
+            name: g.name,
+            city: g.city ?? '',
+            totalPlots: g.total_plots ?? 0,
+            availablePlots: g.available_plots ?? 0,
+          })));
+        } catch { /* show empty */ }
+        if (active) setLoading(false);
+      })();
+      return () => { active = false; };
+    }, [])
+  );
 
   const handleDelete = (id: string) => {
     Alert.alert("Delete Graveyard", "This will permanently remove the graveyard and all its plots.", [
       { text: "Cancel" },
       {
         text: "Delete", style: "destructive",
-        onPress: () => {
-          // TODO: api.adminDeleteGraveyard(id)
-          setItems((prev) => prev.filter((g) => g.id !== id));
+        onPress: async () => {
+          try {
+            await adminDeleteGraveyard(id);
+            setItems((prev) => prev.filter((g) => g.id !== id));
+          } catch (e: any) {
+            Alert.alert("Error", e?.error || "Could not delete graveyard.");
+          }
         },
       },
     ]);

@@ -1,19 +1,13 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import { adminGetBookings, adminUpdateBooking } from "../utils/api";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
 interface AdminBooking { id: string; user: string; service: string; date: string; status: BookingStatus; price: string }
-
-// TODO: replace with api.adminGetBookings()
-const MOCK: AdminBooking[] = [
-  { id: "b1", user: "Ali Khan", service: "Grave Booking", date: "2026-06-10", status: "pending", price: "15000" },
-  { id: "b2", user: "Sara Ahmed", service: "Quran Recitation", date: "2026-05-25", status: "confirmed", price: "1200" },
-  { id: "b3", user: "Omar Farooq", service: "Memorial Care", date: "2026-03-01", status: "completed", price: "8000" },
-  { id: "b4", user: "Fatima Bibi", service: "Grave Booking", date: "2026-04-14", status: "cancelled", price: "15000" },
-];
 
 const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string }> = {
   pending: { bg: "#fef3c7", text: "#92400e" },
@@ -30,15 +24,37 @@ export default function ManageBookings() {
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setTimeout(() => { setBookings(MOCK); setLoading(false); }, 400);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      (async () => {
+        try {
+          const raw: any[] = await adminGetBookings();
+          if (active) setBookings(raw.map((b) => ({
+            id: b.id,
+            user: b.users?.name || b.user_name || b.user_id || 'Unknown',
+            service: b.meta?.serviceType || b.meta?.service || b.package_id || 'Service',
+            date: (b.date || b.created_at || '').substring(0, 10),
+            status: (b.status === 'paid' ? 'confirmed' : b.status) as BookingStatus,
+            price: String(b.meta?.price || b.amount || 0),
+          })));
+        } catch { /* show empty */ }
+        if (active) setLoading(false);
+      })();
+      return () => { active = false; };
+    }, [])
+  );
 
   const filtered = filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
 
-  const updateStatus = (id: string, newStatus: BookingStatus) => {
-    // TODO: api.adminUpdateBooking(id, { status: newStatus })
-    setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: newStatus } : b));
+  const updateStatus = async (id: string, newStatus: BookingStatus) => {
+    try {
+      await adminUpdateBooking(id, { status: newStatus });
+      setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: newStatus } : b));
+    } catch (e: any) {
+      Alert.alert("Error", e?.error || "Update failed.");
+    }
   };
 
   return (

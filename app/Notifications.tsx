@@ -1,9 +1,12 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import { getToken } from "../utils/authStore";
+
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 interface Notif {
   id: string;
@@ -12,15 +15,8 @@ interface Notif {
   time: string;
   read: boolean;
   type: "booking" | "payment" | "service" | "system";
+  booking_id?: string;
 }
-
-const MOCK_NOTIFS: Notif[] = [
-  { id: "n1", title: "Booking Confirmed", body: "Your grave booking for Plot A3 has been confirmed.", time: "2 mins ago", read: false, type: "booking" },
-  { id: "n2", title: "Payment Received", body: "PKR 15,000 payment received for booking #B1.", time: "5 mins ago", read: false, type: "payment" },
-  { id: "n3", title: "Service Completed", body: "Memorial care for Weekly Plan has been completed. View your report.", time: "1 day ago", read: true, type: "service" },
-  { id: "n4", title: "Booking Reminder", body: "You have a Quran Recitation session tomorrow at 9:00 AM.", time: "2 days ago", read: true, type: "booking" },
-  { id: "n5", title: "Welcome to Eternal Care", body: "Thank you for joining. We are here for you.", time: "5 days ago", read: true, type: "system" },
-];
 
 const TYPE_COLOR: Record<Notif["type"], string> = {
   booking: "#164A40",
@@ -29,11 +25,77 @@ const TYPE_COLOR: Record<Notif["type"], string> = {
   system: "#6b7280",
 };
 
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} min${mins !== 1 ? 's' : ''} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs !== 1 ? 's' : ''} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days !== 1 ? 's' : ''} ago`;
+}
+
 export default function Notifications() {
   const router = useRouter();
-  const [notifs, setNotifs] = useState(MOCK_NOTIFS);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const markAllRead = () => setNotifs((n) => n.map((x) => ({ ...x, read: true })));
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API}/notifications`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const { notifications: raw } = await res.json();
+          setNotifs((raw || []).map((n: any) => ({
+            id: n.id,
+            title: n.title || '',
+            body: n.body || n.message || '',
+            time: n.created_at ? timeAgo(n.created_at) : '',
+            read: Boolean(n.read),
+            type: n.type || 'system',
+            booking_id: n.booking_id,
+          })));
+        }
+      } catch { /* show empty */ }
+      setLoading(false);
+    })();
+  }, []);
+
+  const markRead = async (notifId: string) => {
+    setNotifs((prev) => prev.map((n) => n.id === notifId ? { ...n, read: true } : n));
+    try {
+      const token = await getToken();
+      await fetch(`${API}/notifications/${notifId}/read`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch { /* best effort */ }
+  };
+
+  const handleTap = (item: Notif) => {
+    markRead(item.id);
+    if (item.booking_id) {
+      (router as any).push({ pathname: '/BookingDetail', params: { id: item.booking_id } });
+    }
+  };
+
+  const markAllRead = async () => {
+    const unread = notifs.filter((n) => !n.read);
+    setNotifs((n) => n.map((x) => ({ ...x, read: true })));
+    const token = await getToken();
+    for (const n of unread) {
+      try {
+        await fetch(`${API}/notifications/${n.id}/read`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch { /* best effort */ }
+    }
+  };
+
   const unreadCount = notifs.filter((n) => !n.read).length;
 
   return (
@@ -52,6 +114,9 @@ export default function Notifications() {
         </Pressable>
       )}
 
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color="#164A40" />
+      ) : (
       <FlatList
         data={notifs}
         keyExtractor={(item) => item.id}
@@ -60,7 +125,7 @@ export default function Notifications() {
         renderItem={({ item }) => (
           <Pressable
             style={[styles.card, !item.read && styles.cardUnread]}
-            onPress={() => setNotifs((prev) => prev.map((n) => n.id === item.id ? { ...n, read: true } : n))}
+            onPress={() => handleTap(item)}
           >
             <View style={[styles.typeDot, { backgroundColor: TYPE_COLOR[item.type] }]} />
             <View style={styles.cardBody}>
@@ -73,6 +138,7 @@ export default function Notifications() {
         )}
         ListEmptyComponent={<Text style={styles.empty}>No notifications.</Text>}
       />
+      )}
     </SafeAreaView>
   );
 }

@@ -3,6 +3,7 @@ import React, { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/theme";
+import { adminCreateGraveyard, adminUpdateGraveyard } from "../utils/api";
 
 export default function GraveyardForm() {
   const router = useRouter();
@@ -25,16 +26,19 @@ export default function GraveyardForm() {
     }
     setSaving(true);
     try {
-      const payload = {
+      const payload: any = {
         name: nameRef.current.trim(),
         city: cityRef.current.trim(),
-        address: addressRef.current.trim(),
+        address: addressRef.current.trim() || undefined,
         lat: latRef.current ? Number(latRef.current) : undefined,
         lng: lngRef.current ? Number(lngRef.current) : undefined,
-        totalPlots: totalPlotsRef.current ? Number(totalPlotsRef.current) : undefined,
+        total_plots: totalPlotsRef.current ? Number(totalPlotsRef.current) : undefined,
       };
-      // TODO: mode === 'edit' ? api.adminUpdateGraveyard(id, payload) : api.adminCreateGraveyard(payload)
-      await new Promise((r) => setTimeout(r, 500));
+      if (mode === 'edit' && id) {
+        await adminUpdateGraveyard(id, payload);
+      } else {
+        await adminCreateGraveyard(payload);
+      }
       (router as any).back();
     } catch (e: any) {
       alert(e?.error || "Failed to save graveyard.");

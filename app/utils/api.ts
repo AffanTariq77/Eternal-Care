@@ -73,7 +73,7 @@ export async function getPlots(graveyardId: string) {
 }
 
 export async function searchGraves(query: string) {
-  return request(`/graves/search?q=${encodeURIComponent(query)}`);
+  return request(`/graveyards/deceased/search?q=${encodeURIComponent(query)}`);
 }
 
 export async function getServiceProviders(type?: string) {
@@ -93,36 +93,47 @@ export async function cancelBooking(id: string) {
   return request(`/bookings/${id}/cancel`, { method: 'POST' });
 }
 
-export async function updateProfile(data: any) {
-  return request('/users/me', { method: 'PATCH', body: JSON.stringify(data) });
+export async function getNotifications() {
+  return request('/notifications');
+}
+
+export async function markNotificationRead(id: string) {
+  return request(`/notifications/${id}/read`, { method: 'POST' });
 }
 
 // Admin endpoints
 export async function adminGetGraveyards() { return request('/admin/graveyards'); }
 export async function adminCreateGraveyard(data: any) { return request('/admin/graveyards', { method: 'POST', body: JSON.stringify(data) }); }
-export async function adminUpdateGraveyard(id: string, data: any) { return request(`/admin/graveyards/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+export async function adminUpdateGraveyard(id: string, data: any) { return request(`/admin/graveyards/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
 export async function adminDeleteGraveyard(id: string) { return request(`/admin/graveyards/${id}`, { method: 'DELETE' }); }
 
-export async function adminGetPlots(graveyardId: string) { return request(`/admin/graveyards/${graveyardId}/plots`); }
-export async function adminCreatePlot(graveyardId: string, data: any) { return request(`/admin/graveyards/${graveyardId}/plots`, { method: 'POST', body: JSON.stringify(data) }); }
-export async function adminUpdatePlot(id: string, data: any) { return request(`/admin/plots/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+export async function adminGetPlots(graveyardId?: string) {
+  const q = graveyardId ? `?graveyard_id=${graveyardId}` : '';
+  return request(`/admin/plots${q}`);
+}
+export async function adminCreatePlot(data: any) { return request('/admin/plots', { method: 'POST', body: JSON.stringify(data) }); }
+export async function adminUpdatePlot(id: string, data: any) { return request(`/admin/plots/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
 
 export async function adminGetBookings(filters?: any) {
   const q = filters ? '?' + new URLSearchParams(filters).toString() : '';
   return request(`/admin/bookings${q}`);
 }
-export async function adminUpdateBooking(id: string, data: any) { return request(`/admin/bookings/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+export async function adminUpdateBooking(id: string, data: any) { return request(`/admin/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
 
-export async function adminGetProviders() { return request('/admin/service-providers'); }
-export async function adminCreateProvider(data: any) { return request('/admin/service-providers', { method: 'POST', body: JSON.stringify(data) }); }
-export async function adminUpdateProvider(id: string, data: any) { return request(`/admin/service-providers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
-export async function adminDeleteProvider(id: string) { return request(`/admin/service-providers/${id}`, { method: 'DELETE' }); }
+export async function adminGetProviders(type?: string) {
+  const q = type ? `?type=${type}` : '';
+  return request(`/admin/providers${q}`);
+}
+export async function adminCreateProvider(data: any) { return request('/admin/providers', { method: 'POST', body: JSON.stringify(data) }); }
+export async function adminUpdateProvider(id: string, data: any) { return request(`/admin/providers/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+export async function adminDeleteProvider(id: string) { return request(`/admin/providers/${id}`, { method: 'DELETE' }); }
 
 export async function adminGetDeceased() { return request('/admin/deceased'); }
 export async function adminCreateDeceased(data: any) { return request('/admin/deceased', { method: 'POST', body: JSON.stringify(data) }); }
-export async function adminUpdateDeceased(id: string, data: any) { return request(`/admin/deceased/${id}`, { method: 'PATCH', body: JSON.stringify(data) }); }
+export async function adminUpdateDeceased(id: string, data: any) { return request(`/admin/deceased/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+export async function adminDeleteDeceased(id: string) { return request(`/admin/deceased/${id}`, { method: 'DELETE' }); }
 
-export async function adminGetReports(from: string, to: string) { return request(`/admin/reports?from=${from}&to=${to}`); }
-export async function adminGetDashboard() { return request('/admin/dashboard'); }
+export async function adminGetReports(from: string, to: string) { return request(`/admin/stats?from=${from}&to=${to}`); }
+export async function adminGetDashboard() { return request('/admin/stats'); }
 
-export default { signup, login, getProfile, registerToken, createBooking, getBooking, payBooking, getGraveyards, getGraveyard, getPlots, searchGraves, getServiceProviders, getServiceProvider, getUserBookings, cancelBooking, updateProfile };
+export default { signup, login, getProfile, registerToken, createBooking, getBooking, payBooking, getGraveyards, getGraveyard, getPlots, searchGraves, getServiceProviders, getServiceProvider, getUserBookings, cancelBooking, getNotifications, markNotificationRead };

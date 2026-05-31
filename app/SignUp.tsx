@@ -131,9 +131,7 @@ export default function Signup() {
                     if (token) {
                       try {
                         await api.registerToken(token);
-                      } catch (e) {
-                        console.warn('Failed to register push token', e);
-                      }
+                      } catch { /* non-critical */ }
                     }
                   }).catch(() => {});
                   (router as any).push('/Home');

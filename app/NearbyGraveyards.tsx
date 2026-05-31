@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,32 +8,77 @@ import {
   Text,
   TextInput,
   View,
+  Dimensions,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
+import * as Location from "expo-location";
 import AvatarButton from "../components/ui/avatar-button";
 import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
 
-// TODO: replace with real expo-location call once expo-location is installed
-const MOCK_GRAVEYARDS = [
-  { id: "g1", name: "Karachi Muslim Graveyard", city: "Karachi", distance: "1.2 km", availablePlots: 42, totalPlots: 200 },
-  { id: "g2", name: "Gizri Cemetery", city: "Karachi", distance: "3.5 km", availablePlots: 18, totalPlots: 120 },
-  { id: "g3", name: "Miani Sahib Graveyard", city: "Lahore", distance: "5.1 km", availablePlots: 75, totalPlots: 350 },
-  { id: "g4", name: "H-8 Graveyard", city: "Islamabad", distance: "7.8 km", availablePlots: 30, totalPlots: 180 },
-];
+const { width, height } = Dimensions.get("window");
+
+interface Graveyard {
+  id: string;
+  name: string;
+  city: string;
+  distance: string;
+  availablePlots: number;
+  totalPlots: number;
+  lat: number;
+  lng: number;
+}
+
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
+
+type ViewMode = "map" | "list";
 
 export default function NearbyGraveyards() {
   const router = useRouter();
+  const mapRef = useRef<MapView>(null);
   const [query, setQuery] = useState("");
-  const [graveyards, setGraveyards] = useState<typeof MOCK_GRAVEYARDS>([]);
+  const [graveyards, setGraveyards] = useState<Graveyard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("map");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: request location permission then call api.getGraveyards(lat, lng)
-    setTimeout(() => {
-      setGraveyards(MOCK_GRAVEYARDS);
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          setLocationError("Location permission denied. Showing all graveyards.");
+        } else {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+        }
+      } catch {
+        setLocationError("Could not get location. Showing all graveyards.");
+      }
+      try {
+        const res = await fetch(`${API}/graveyards`);
+        if (res.ok) {
+          const raw: any[] = await res.json();
+          setGraveyards(raw.map((g) => ({
+            id: g.id,
+            name: g.name,
+            city: g.city ?? "",
+            distance: "",
+            availablePlots: g.available_plots ?? 0,
+            totalPlots: g.total_plots ?? 0,
+            lat: parseFloat(g.lat) || 24.8607,
+            lng: parseFloat(g.lng) || 67.0011,
+          })));
+        }
+      } catch {
+        setLocationError("Could not load graveyards. Please try again.");
+      }
       setLoading(false);
-    }, 600);
+    })();
   }, []);
 
   const filtered = graveyards.filter(
@@ -42,6 +87,21 @@ export default function NearbyGraveyards() {
       g.city.toLowerCase().includes(query.toLowerCase())
   );
 
+  const initialRegion = userLocation
+    ? { latitude: userLocation.lat, longitude: userLocation.lng, latitudeDelta: 0.15, longitudeDelta: 0.15 }
+    : { latitude: 24.8607, longitude: 67.0011, latitudeDelta: 0.5, longitudeDelta: 0.5 };
+
+  const focusGraveyard = (g: Graveyard) => {
+    setSelectedId(g.id);
+    mapRef.current?.animateToRegion(
+      { latitude: g.lat, longitude: g.lng, latitudeDelta: 0.03, longitudeDelta: 0.03 },
+      400
+    );
+  };
+
+  const navigateToDetail = (g: Graveyard) =>
+    (router as any).push({ pathname: "/GraveyardDetail", params: { id: g.id, name: g.name } });
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -49,9 +109,7 @@ export default function NearbyGraveyards() {
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
         <Text style={styles.headerTitle}>Nearby Graveyards</Text>
-        <View style={styles.headerRight}>
-          <AvatarButton size={36} />
-        </View>
+        <AvatarButton size={36} />
       </View>
 
       <View style={styles.searchWrap}>
@@ -66,8 +124,88 @@ export default function NearbyGraveyards() {
         <SocialSvg source={require("../assets/images/search.svg")} size={18} />
       </View>
 
+      {locationError ? (
+        <Text style={styles.locationError}>{locationError}</Text>
+      ) : null}
+
+      {/* View toggle */}
+      <View style={styles.toggleRow}>
+        <Pressable
+          style={[styles.toggleBtn, viewMode === "map" && styles.toggleBtnActive]}
+          onPress={() => setViewMode("map")}
+        >
+          <Text style={[styles.toggleText, viewMode === "map" && styles.toggleTextActive]}>Map</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.toggleBtn, viewMode === "list" && styles.toggleBtnActive]}
+          onPress={() => setViewMode("list")}
+        >
+          <Text style={[styles.toggleText, viewMode === "list" && styles.toggleTextActive]}>List</Text>
+        </Pressable>
+      </View>
+
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color="#164A40" />
+      ) : viewMode === "map" ? (
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+            initialRegion={initialRegion}
+            showsUserLocation
+            showsMyLocationButton
+          >
+            {/* User location marker is handled by showsUserLocation */}
+
+            {filtered.map((g) => (
+              <Marker
+                key={g.id}
+                coordinate={{ latitude: g.lat, longitude: g.lng }}
+                pinColor={selectedId === g.id ? "#ff5a5f" : "#164A40"}
+                onPress={() => setSelectedId(g.id)}
+              >
+                <Callout onPress={() => navigateToDetail(g)} tooltip>
+                  <View style={styles.callout}>
+                    <Text style={styles.calloutTitle}>{g.name}</Text>
+                    <Text style={styles.calloutSub}>{g.city}</Text>
+                    <View style={styles.calloutBadge}>
+                      <Text style={styles.calloutBadgeText}>{g.availablePlots} plots available</Text>
+                    </View>
+                    <Text style={styles.calloutAction}>Tap to view details →</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+          </MapView>
+
+          {/* Bottom sheet: list of graveyards below map */}
+          <View style={styles.bottomSheet}>
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardScroll}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={[styles.mapCard, selectedId === item.id && styles.mapCardSelected]}
+                  onPress={() => focusGraveyard(item)}
+                  onLongPress={() => navigateToDetail(item)}
+                >
+                  <Text style={styles.mapCardName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.mapCardCity}>{item.city} · {item.distance}</Text>
+                  <View style={styles.mapCardBadge}>
+                    <Text style={styles.mapCardBadgeText}>{item.availablePlots} available</Text>
+                  </View>
+                  <Pressable style={styles.mapCardBtn} onPress={() => navigateToDetail(item)}>
+                    <Text style={styles.mapCardBtnText}>View Plots</Text>
+                  </Pressable>
+                </Pressable>
+              )}
+            />
+          </View>
+        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -75,10 +213,7 @@ export default function NearbyGraveyards() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <Pressable
-              style={styles.card}
-              onPress={() => (router as any).push({ pathname: "/GraveyardDetail", params: { id: item.id, name: item.name } })}
-            >
+            <Pressable style={styles.card} onPress={() => navigateToDetail(item)}>
               <View style={styles.cardBody}>
                 <Text style={styles.cardName}>{item.name}</Text>
                 <Text style={styles.cardCity}>{item.city}</Text>
@@ -95,9 +230,7 @@ export default function NearbyGraveyards() {
               </View>
             </Pressable>
           )}
-          ListEmptyComponent={
-            <Text style={styles.empty}>No graveyards found.</Text>
-          }
+          ListEmptyComponent={<Text style={styles.empty}>No graveyards found.</Text>}
         />
       )}
     </SafeAreaView>
@@ -107,12 +240,8 @@ export default function NearbyGraveyards() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.light.background || "#fff" },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    paddingTop: 8,
-    marginTop: 16,
-    marginBottom: 12,
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 18, paddingTop: 8, marginTop: 16, marginBottom: 12,
   },
   back: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: "#000",
@@ -120,22 +249,59 @@ const styles = StyleSheet.create({
   },
   backText: { color: "#fff", fontWeight: "700" },
   headerTitle: { flex: 1, marginLeft: 12, fontSize: 18, fontWeight: "800" },
-  headerRight: { flexDirection: "row", alignItems: "center" },
   searchWrap: {
     flexDirection: "row", alignItems: "center",
-    marginHorizontal: 18, marginBottom: 12,
+    marginHorizontal: 18, marginBottom: 8,
     borderWidth: 1, borderColor: "#164A40", borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 10,
-    backgroundColor: "#fff",
+    paddingHorizontal: 14, paddingVertical: 10, backgroundColor: "#fff",
   },
   searchInput: { flex: 1, color: "#111", fontSize: 14 },
+  locationError: { color: "#f59e0b", fontSize: 12, paddingHorizontal: 18, marginBottom: 6 },
+  toggleRow: { flexDirection: "row", paddingHorizontal: 18, gap: 10, marginBottom: 10 },
+  toggleBtn: {
+    flex: 1, paddingVertical: 8, borderRadius: 10,
+    borderWidth: 1, borderColor: "#164A40", alignItems: "center",
+  },
+  toggleBtnActive: { backgroundColor: "#164A40" },
+  toggleText: { color: "#164A40", fontWeight: "700" },
+  toggleTextActive: { color: "#fff" },
+
+  // Map view
+  mapContainer: { flex: 1 },
+  map: { width: "100%", height: height * 0.52 },
+  callout: {
+    backgroundColor: "#fff", borderRadius: 12, padding: 12,
+    width: 200, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 8, elevation: 6,
+  },
+  calloutTitle: { fontWeight: "800", fontSize: 14, color: "#111", marginBottom: 2 },
+  calloutSub: { color: "#666", fontSize: 12, marginBottom: 8 },
+  calloutBadge: { backgroundColor: "#d7efe6", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start", marginBottom: 8 },
+  calloutBadgeText: { color: "#164A40", fontSize: 12, fontWeight: "600" },
+  calloutAction: { color: "#164A40", fontSize: 12, fontWeight: "700" },
+  bottomSheet: {
+    backgroundColor: "#fff", paddingVertical: 14,
+    borderTopWidth: 1, borderTopColor: "#eee",
+  },
+  cardScroll: { paddingHorizontal: 18, gap: 12 },
+  mapCard: {
+    width: 180, backgroundColor: "#fff", borderRadius: 14, padding: 14,
+    borderWidth: 2, borderColor: "#e5e7eb",
+    shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
+  },
+  mapCardSelected: { borderColor: "#164A40" },
+  mapCardName: { fontSize: 14, fontWeight: "700", color: "#111", marginBottom: 2 },
+  mapCardCity: { color: "#666", fontSize: 12, marginBottom: 8 },
+  mapCardBadge: { backgroundColor: "#d7efe6", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: "flex-start", marginBottom: 10 },
+  mapCardBadgeText: { color: "#164A40", fontSize: 11, fontWeight: "600" },
+  mapCardBtn: { backgroundColor: "#164A40", borderRadius: 10, paddingVertical: 7, alignItems: "center" },
+  mapCardBtnText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+
+  // List view
   list: { paddingHorizontal: 18, paddingBottom: 30 },
   card: {
-    backgroundColor: "#fff", borderRadius: 14,
-    padding: 16, marginBottom: 14,
+    backgroundColor: "#fff", borderRadius: 14, padding: 16, marginBottom: 14,
     flexDirection: "row", alignItems: "center",
-    shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 6,
-    elevation: 3,
+    shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
   },
   cardBody: { flex: 1 },
   cardName: { fontSize: 16, fontWeight: "700", color: "#111", marginBottom: 2 },

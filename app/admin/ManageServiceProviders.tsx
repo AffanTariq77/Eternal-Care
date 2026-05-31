@@ -1,17 +1,12 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import { adminGetProviders, adminDeleteProvider } from "../utils/api";
 
 interface Provider { id: string; name: string; type: string; contact: string; available: boolean }
-
-// TODO: replace with api.adminGetProviders()
-const MOCK: Provider[] = [
-  { id: "r1", name: "Qari Abdul Rahman", type: "quran_recitation", contact: "03001234567", available: true },
-  { id: "r2", name: "Maulana Tariq Ahmed", type: "quran_recitation", contact: "03111234567", available: true },
-  { id: "gc1", name: "Clean Graves Team A", type: "gravecare", contact: "03211234567", available: false },
-];
 
 const TYPE_LABELS: Record<string, string> = {
   quran_recitation: "Quran Recitation",
@@ -23,14 +18,41 @@ export default function ManageServiceProviders() {
   const [items, setItems] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setTimeout(() => { setItems(MOCK); setLoading(false); }, 400);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      (async () => {
+        try {
+          const raw: any[] = await adminGetProviders();
+          if (active) setItems(raw.map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: p.type || p.service_type || '',
+            contact: p.contact || p.phone || '',
+            available: p.available ?? true,
+          })));
+        } catch { /* show empty */ }
+        if (active) setLoading(false);
+      })();
+      return () => { active = false; };
+    }, [])
+  );
 
   const handleDelete = (id: string) => {
     Alert.alert("Remove Provider", "Remove this service provider?", [
       { text: "Cancel" },
-      { text: "Remove", style: "destructive", onPress: () => { setItems((p) => p.filter((x) => x.id !== id)); } },
+      {
+        text: "Remove", style: "destructive",
+        onPress: async () => {
+          try {
+            await adminDeleteProvider(id);
+            setItems((p) => p.filter((x) => x.id !== id));
+          } catch (e: any) {
+            Alert.alert("Error", e?.error || "Could not remove provider.");
+          }
+        },
+      },
     ]);
   };
 

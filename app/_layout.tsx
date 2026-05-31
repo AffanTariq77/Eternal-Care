@@ -3,8 +3,8 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useState } from "react";
 import { StatusBar, StyleSheet, View } from "react-native";
 import { preloadCommonAssets } from "../utils/assetCache";
+import { getToken, clearToken, clearUser } from "../utils/authStore";
 
-// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -13,14 +13,25 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Preload all SVG assets BEFORE allowing app to render
         await preloadCommonAssets();
-      } catch (e) {
-        console.warn("Error preloading assets:", e);
-      } finally {
-        // Assets are now loaded, allow app to render
-        setAppIsReady(true);
-      }
+      } catch { /* non-critical */ }
+
+      // Check if stored JWT has expired (decode claim locally — no network needed)
+      try {
+        const token = await getToken();
+        if (token) {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+              await clearToken();
+              await clearUser();
+            }
+          }
+        }
+      } catch { /* malformed token or parse error — leave token as-is */ }
+
+      setAppIsReady(true);
     }
 
     prepare();

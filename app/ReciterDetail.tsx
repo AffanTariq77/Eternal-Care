@@ -42,7 +42,14 @@ export default function ReciterDetail() {
       slotTime: selectedTime,
       price: price || "1200",
     });
-    (router as any).push("/Form");
+    (router as any).push({
+      pathname: "/PaymentScreen",
+      params: {
+        amount: price || "1200",
+        description: `Quran Recitation — ${name} at ${selectedTime}`,
+        returnPath: "/Home",
+      },
+    });
   };
 
   return (

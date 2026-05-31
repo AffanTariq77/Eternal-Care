@@ -1,16 +1,12 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import { adminGetDeceased } from "../utils/api";
 
 interface Deceased { id: string; name: string; cnic: string; burialDate: string; graveyard: string; plotCode: string }
-
-// TODO: replace with api.adminGetDeceased()
-const MOCK: Deceased[] = [
-  { id: "d1", name: "Muhammad Ali Khan", cnic: "42101-1234567-1", burialDate: "2022-03-15", graveyard: "Karachi Muslim Graveyard", plotCode: "A3" },
-  { id: "d2", name: "Fatima Bibi", cnic: "42301-7654321-0", burialDate: "2020-11-02", graveyard: "Gizri Cemetery", plotCode: "B7" },
-];
 
 export default function DeceasedRecords() {
   const router = useRouter();
@@ -18,9 +14,27 @@ export default function DeceasedRecords() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    setTimeout(() => { setItems(MOCK); setLoading(false); }, 400);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      (async () => {
+        try {
+          const raw: any[] = await adminGetDeceased();
+          if (active) setItems(raw.map((d) => ({
+            id: d.id,
+            name: d.full_name || d.name || '',
+            cnic: d.cnic || '',
+            burialDate: (d.date_of_burial || d.burial_date || '').substring(0, 10),
+            graveyard: d.plots?.graveyards?.name || d.graveyard_name || '',
+            plotCode: d.plots?.plot_code || d.plot_code || '',
+          })));
+        } catch { /* show empty */ }
+        if (active) setLoading(false);
+      })();
+      return () => { active = false; };
+    }, [])
+  );
 
   const filtered = items.filter(
     (d) => d.name.toLowerCase().includes(query.toLowerCase()) || d.cnic.includes(query)
@@ -29,7 +43,7 @@ export default function DeceasedRecords() {
   const handleDelete = (id: string) => {
     Alert.alert("Delete Record", "Permanently remove this deceased record?", [
       { text: "Cancel" },
-      { text: "Delete", style: "destructive", onPress: () => setItems((p) => p.filter((x) => x.id !== id)) },
+      { text: "Delete", style: "destructive", onPress: () => { setItems((p) => p.filter((x) => x.id !== id)); } },
     ]);
   };
 

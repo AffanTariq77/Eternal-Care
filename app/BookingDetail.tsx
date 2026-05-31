@@ -4,13 +4,9 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import { getToken } from "../utils/authStore";
 
-// TODO: replace with api.getBooking(id)
-const MOCK: Record<string, any> = {
-  b1: { id: "b1", service: "Grave Booking", detail: "Plot A3 — Karachi Muslim Graveyard", date: "2026-06-10", price: "15000", status: "upcoming", packageId: "grave_g1_A3", name: "Muhammad Test", email: "test@example.com", phone: "03001234567" },
-  b2: { id: "b2", service: "Quran Recitation", detail: "Session with Qari Abdul Rahman", date: "2026-05-25", price: "1200", status: "upcoming", packageId: "quran_r1_0900AM" },
-  b3: { id: "b3", service: "Memorial Care", detail: "Weekly Care Plan", date: "2026-03-01", price: "8000", status: "completed", packageId: "gravecare_weekly" },
-};
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   upcoming: { bg: "#d1fae5", text: "#065f46" },
@@ -26,11 +22,29 @@ export default function BookingDetail() {
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    // TODO: api.getBooking(id).then(d => setBooking(d.booking))
-    setTimeout(() => {
-      setBooking(MOCK[id] || null);
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API}/bookings/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const { booking: raw } = await res.json();
+          if (raw) {
+            setBooking({
+              id: raw.id,
+              service: raw.meta?.serviceType || raw.meta?.service || 'Booking',
+              detail: raw.meta?.packageLabel || raw.meta?.detail || raw.package_id || '',
+              date: (raw.date || '').substring(0, 10),
+              price: String(raw.meta?.price || raw.amount || 0),
+              status: ['paid', 'confirmed', 'pending'].includes(raw.status) ? 'upcoming' : (raw.status || 'upcoming'),
+              packageId: raw.package_id,
+            });
+          }
+        }
+      } catch { /* show not-found */ }
       setLoading(false);
-    }, 300);
+    })();
   }, [id]);
 
   const handleCancel = () => {
@@ -41,8 +55,13 @@ export default function BookingDetail() {
         style: "destructive",
         onPress: async () => {
           setCancelling(true);
-          // TODO: await api.cancelBooking(id);
-          await new Promise((r) => setTimeout(r, 400));
+          try {
+            const token = await getToken();
+            await fetch(`${API}/bookings/${id}/cancel`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          } catch { /* best effort */ }
           setCancelling(false);
           (router as any).back();
         },

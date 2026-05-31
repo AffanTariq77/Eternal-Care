@@ -13,18 +13,9 @@ import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
 type PlotStatus = "available" | "occupied" | "reserved";
-interface Plot { code: string; status: PlotStatus; price?: number }
+interface Plot { code: string; status: PlotStatus; price?: number; plotId?: string }
 
-// TODO: replace with api.getPlots(graveyardId)
-function mockPlots(): Plot[] {
-  const codes = ["A1","A2","A3","A4","B1","B2","B3","B4","C1","C2","C3","C4","D1","D2","D3","D4"];
-  const statuses: PlotStatus[] = ["available","occupied","reserved"];
-  return codes.map((code, i) => ({
-    code,
-    status: statuses[i % 3],
-    price: 15000 + (i * 500),
-  }));
-}
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 const STATUS_COLOR: Record<PlotStatus, string> = {
   available: "#22c55e",
@@ -39,11 +30,21 @@ export default function GraveyardDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: const data = await api.getPlots(id); setPlots(data.plots);
-    setTimeout(() => {
-      setPlots(mockPlots());
+    (async () => {
+      try {
+        const res = await fetch(`${API}/graveyards/${id}/plots`);
+        if (res.ok) {
+          const raw: any[] = await res.json();
+          setPlots(raw.map((p) => ({
+            code: p.plot_code,
+            status: (p.status as PlotStatus) || "available",
+            price: parseFloat(p.price) || 15000,
+            plotId: p.id,
+          })));
+        }
+      } catch { /* show empty state */ }
       setLoading(false);
-    }, 400);
+    })();
   }, [id]);
 
   const available = plots.filter((p) => p.status === "available").length;

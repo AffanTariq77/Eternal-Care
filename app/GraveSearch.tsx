@@ -22,12 +22,7 @@ interface GraveResult {
   graveyardId: string;
 }
 
-// TODO: replace with api.searchGraves(query)
-const MOCK_RESULTS: GraveResult[] = [
-  { id: "gr1", deceasedName: "Muhammad Ali Khan", graveyard: "Karachi Muslim Graveyard", plotCode: "A3", burialDate: "2022-03-15", graveyardId: "g1" },
-  { id: "gr2", deceasedName: "Fatima Bibi", graveyard: "Gizri Cemetery", plotCode: "B7", burialDate: "2020-11-02", graveyardId: "g2" },
-  { id: "gr3", deceasedName: "Abdul Rehman Siddiqui", graveyard: "H-8 Graveyard", plotCode: "D2", burialDate: "2023-06-28", graveyardId: "g4" },
-];
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 export default function GraveSearch() {
   const router = useRouter();
@@ -40,12 +35,20 @@ export default function GraveSearch() {
     if (!query.trim()) return;
     setLoading(true);
     setSearched(false);
-    // TODO: const data = await api.searchGraves(query); setResults(data.results);
-    await new Promise((r) => setTimeout(r, 500));
-    setResults(MOCK_RESULTS.filter((r) =>
-      r.deceasedName.toLowerCase().includes(query.toLowerCase()) ||
-      r.plotCode.toLowerCase().includes(query.toLowerCase())
-    ));
+    try {
+      const res = await fetch(`${API}/graveyards/deceased/search?q=${encodeURIComponent(query.trim())}`);
+      if (res.ok) {
+        const raw: any[] = await res.json();
+        setResults(raw.map((d) => ({
+          id: d.id,
+          deceasedName: d.full_name || d.name || '',
+          graveyard: d.plots?.graveyards?.name || d.graveyard_name || '',
+          plotCode: d.plots?.plot_code || d.plot_code || '',
+          burialDate: (d.date_of_burial || d.burial_date || '').substring(0, 10),
+          graveyardId: d.plots?.graveyard_id || d.graveyard_id || '',
+        })));
+      }
+    } catch { /* show empty */ }
     setLoading(false);
     setSearched(true);
   };

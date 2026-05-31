@@ -23,13 +23,7 @@ interface Reciter {
   bio: string;
 }
 
-// TODO: replace with api.getServiceProviders('quran_recitation')
-const MOCK_RECITERS: Reciter[] = [
-  { id: "r1", name: "Qari Abdul Rahman", language: "Arabic", rating: 5, price: 1200, available: true, bio: "Hafiz with 15 years of recitation experience." },
-  { id: "r2", name: "Maulana Tariq Ahmed", language: "Urdu", rating: 4, price: 800, available: true, bio: "Specialised in Dua and Surah Yaseen recitation." },
-  { id: "r3", name: "Sheikh Omar Farooq", language: "Arabic/Urdu", rating: 5, price: 1500, available: false, bio: "Certified from Madinah, available for home visits." },
-  { id: "r4", name: "Hafiz Bilal Khan", language: "Urdu", rating: 4, price: 700, available: true, bio: "Experienced in reciting for Khatam and Quran Khwani." },
-];
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 function Stars({ count }: { count: number }) {
   return (
@@ -47,10 +41,24 @@ export default function ReciterList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => {
-      setReciters(MOCK_RECITERS);
+    (async () => {
+      try {
+        const res = await fetch(`${API}/service-providers?type=quran_recitation`);
+        if (res.ok) {
+          const raw: any[] = await res.json();
+          setReciters(raw.map((p) => ({
+            id: p.id,
+            name: p.name,
+            language: p.language ?? 'Urdu',
+            rating: Number(p.rating) || 4,
+            price: parseFloat(p.price) || 0,
+            available: p.available ?? true,
+            bio: p.bio ?? '',
+          })));
+        }
+      } catch { /* show empty */ }
       setLoading(false);
-    }, 400);
+    })();
   }, []);
 
   const filtered = reciters.filter((r) => {

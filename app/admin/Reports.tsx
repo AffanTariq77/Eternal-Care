@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/theme";
+import { adminGetReports } from "../utils/api";
 
 interface ReportData {
   totalBookings: number;
@@ -10,18 +11,6 @@ interface ReportData {
   byService: { label: string; count: number; revenue: number }[];
   plotOccupancy: number;
 }
-
-// TODO: replace with api.adminGetReports(from, to)
-const MOCK_REPORT: ReportData = {
-  totalBookings: 48,
-  revenue: 284000,
-  byService: [
-    { label: "Grave Booking", count: 22, revenue: 180000 },
-    { label: "Quran Recitation", count: 18, revenue: 21600 },
-    { label: "Memorial Care", count: 8, revenue: 82400 },
-  ],
-  plotOccupancy: 67,
-};
 
 export default function Reports() {
   const router = useRouter();
@@ -32,9 +21,15 @@ export default function Reports() {
 
   const handleGenerate = async () => {
     setLoading(true);
-    // TODO: const data = await api.adminGetReports(from, to); setReport(data);
-    await new Promise((r) => setTimeout(r, 600));
-    setReport(MOCK_REPORT);
+    try {
+      const data = await adminGetReports(from, to);
+      setReport({
+        totalBookings: data.bookingsToday ?? data.totalBookings ?? 0,
+        revenue: data.revenue ?? 0,
+        byService: data.byService ?? [],
+        plotOccupancy: data.plotOccupancy ?? data.availablePlots ?? 0,
+      });
+    } catch { /* show nothing */ }
     setLoading(false);
   };
 

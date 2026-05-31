@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import { getToken } from "../utils/authStore";
 
 type BookingStatus = "upcoming" | "completed" | "cancelled";
 
@@ -23,13 +24,7 @@ interface Booking {
   status: BookingStatus;
 }
 
-// TODO: replace with api.getUserBookings()
-const MOCK_BOOKINGS: Booking[] = [
-  { id: "b1", service: "Grave Booking", detail: "Plot A3 — Karachi Muslim Graveyard", date: "2026-06-10", price: "15000", status: "upcoming" },
-  { id: "b2", service: "Quran Recitation", detail: "Session with Qari Abdul Rahman", date: "2026-05-25", price: "1200", status: "upcoming" },
-  { id: "b3", service: "Memorial Care", detail: "Weekly Care Plan", date: "2026-03-01", price: "8000", status: "completed" },
-  { id: "b4", service: "Quran Recitation", detail: "Session with Maulana Tariq Ahmed", date: "2026-02-14", price: "800", status: "cancelled" },
-];
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string }> = {
   upcoming: { bg: "#d1fae5", text: "#065f46" },
@@ -50,11 +45,19 @@ export default function BookingHistory() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: api.getUserBookings().then(data => setBookings(data.bookings))
-    setTimeout(() => {
-      setBookings(MOCK_BOOKINGS);
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API}/bookings/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const { bookings: raw } = await res.json();
+          setBookings((raw || []) as Booking[]);
+        }
+      } catch { /* show empty */ }
       setLoading(false);
-    }, 500);
+    })();
   }, []);
 
   const filtered = bookings.filter((b) => b.status === tab);

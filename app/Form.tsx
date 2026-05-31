@@ -79,26 +79,14 @@ const Input: React.FC<{
   keyboardType?: any;
 }> = React.memo(({ placeholder, defaultValue, valueRef, onBlurCommit, keyboardType }) => {
   // log renders and focus to help debug interruptions
-  React.useEffect(() => {
-    console.log('Render Input', placeholder, (defaultValue || '').length);
-  }, [placeholder, defaultValue]);
-
   return (
     <View style={styles.inputWrap}>
       <TextInput
         placeholder={placeholder}
         placeholderTextColor="#9AA"
         defaultValue={defaultValue}
-        onChangeText={(v) => {
-          // update ref only (no state updates) to avoid re-renders while typing
-          valueRef.current = v;
-          console.log('Form input change (ref)', placeholder, v);
-        }}
-        onFocus={() => console.log('Input focus', placeholder)}
-        onBlur={() => {
-          console.log('Input blur', placeholder, valueRef.current);
-          if (onBlurCommit) onBlurCommit(valueRef.current);
-        }}
+        onChangeText={(v) => { valueRef.current = v; }}
+        onBlur={() => { if (onBlurCommit) onBlurCommit(valueRef.current); }}
         style={styles.input}
         autoCorrect={false}
         autoCapitalize="none"
@@ -225,7 +213,6 @@ const Input: React.FC<{
                     getBooking,
                   } = require("../utils/bookingStore");
                   const prev = getBooking();
-                  console.log('Form prev booking', prev);
                   // Read current values from refs (captures latest typed chars even if blur didn't fire)
                   const merged = {
                     ...prev,
@@ -241,8 +228,6 @@ const Input: React.FC<{
                     postal: postalRef.current || postal,
                   };
 
-                  // Client-side validation for required booking fields
-                  console.log('Creating booking with', { packageId: merged.packageId, date: merged.date, packageRef: packageRef.current, dateRef: dateRef.current, selectedPackage, selectedDate });
                   if (!merged.packageId || !merged.date) {
                     const missing: string[] = [];
                     if (!merged.packageId) missing.push('package');
