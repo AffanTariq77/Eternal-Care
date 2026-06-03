@@ -245,6 +245,12 @@ export default function NearbyGraveyards() {
                   </View>
                   <Text style={styles.totalText}>{item.totalPlots} total plots</Text>
                 </View>
+                <Pressable
+                  style={styles.viewMapBtn}
+                  onPress={() => { setViewMode("map"); focusGraveyard(item); }}
+                >
+                  <Text style={styles.viewMapBtnText}>View on Map</Text>
+                </Pressable>
               </View>
               <View style={styles.distanceWrap}>
                 <Text style={styles.distanceText}>{item.distance}</Text>
@@ -336,4 +342,9 @@ const styles = StyleSheet.create({
   distanceText: { color: "#164A40", fontWeight: "700", fontSize: 13 },
   arrow: { fontSize: 22, color: "#164A40", marginTop: 4 },
   empty: { textAlign: "center", color: "#999", marginTop: 40 },
+  viewMapBtn: {
+    marginTop: 8, borderWidth: 1, borderColor: "#164A40",
+    borderRadius: 8, paddingVertical: 6, alignItems: "center",
+  },
+  viewMapBtnText: { color: "#164A40", fontSize: 12, fontWeight: "700" },
 });
