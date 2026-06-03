@@ -36,6 +36,8 @@ module.exports = {
     },
     plugins: [
       "expo-router",
+      "expo-font",
+      "expo-web-browser",
       [
         "@stripe/stripe-react-native",
         {
