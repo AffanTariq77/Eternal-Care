@@ -13,6 +13,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import SocialSvg from "../components/ui/social-svg";
+import EmailIcon from "../assets/images/emailblackpng.svg";
+import LockIcon from "../assets/images/lock.svg";
+import HideIcon from "../assets/images/hide.svg";
+import FacebookIcon from "../assets/images/facebook1.svg";
+import MailIcon from "../assets/images/mail1.svg";
+import GoogleIcon from "../assets/images/google1.svg";
 import { Colors } from "../constants/theme";
 import api from "./utils/api";
 import { saveToken } from "../utils/authStore";
@@ -78,7 +84,7 @@ export default function Signup() {
             <View style={styles.inputRow}>
               <View style={{ marginRight: 8 }}>
                 <SocialSvg
-                  source={require("../assets/images/emailblackpng.svg")}
+                  Icon={EmailIcon}
                   size={20}
                 />
               </View>
@@ -94,7 +100,7 @@ export default function Signup() {
             <View style={styles.inputRow}>
               <View style={{ marginRight: 8 }}>
                 <SocialSvg
-                  source={require("../assets/images/lock.svg")}
+                  Icon={LockIcon}
                   size={18}
                 />
               </View>
@@ -110,7 +116,7 @@ export default function Signup() {
                 style={styles.eyeBtn}
               >
                 <SocialSvg
-                  source={require("../assets/images/hide.svg")}
+                  Icon={HideIcon}
                   size={18}
                 />
               </Pressable>
@@ -150,19 +156,19 @@ export default function Signup() {
             <View style={styles.socialRow}>
               <View style={styles.social}>
                 <SocialSvg
-                  source={require("../assets/images/facebook1.svg")}
+                  Icon={FacebookIcon}
                   size={36}
                 />
               </View>
               <View style={styles.social}>
                 <SocialSvg
-                  source={require("../assets/images/mail1.svg")}
+                  Icon={MailIcon}
                   size={36}
                 />
               </View>
               <View style={styles.social}>
                 <SocialSvg
-                  source={require("../assets/images/google1.svg")}
+                  Icon={GoogleIcon}
                   size={36}
                 />
               </View>

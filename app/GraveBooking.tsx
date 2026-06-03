@@ -10,6 +10,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import BellIcon from "../assets/images/bell.svg";
+import FilterIcon from "../assets/images/filter.svg";
+import SearchIcon from "../assets/images/search.svg";
+import GraveBookingIcon from "../assets/images/grave-booking.svg";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
@@ -27,7 +31,7 @@ export default function GraveBooking() {
         </Pressable>
         <View style={styles.headerRight}>
           <AvatarButton size={36} />
-          <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
+          <SocialSvg Icon={BellIcon} size={20} />
         </View>
       </View>
 
@@ -36,11 +40,11 @@ export default function GraveBooking() {
           <Text style={styles.searchPlaceholder}>Search graveyard.....</Text>
           <View style={styles.searchIcons}>
             <SocialSvg
-              source={require("../assets/images/filter.svg")}
+              Icon={FilterIcon}
               size={16}
             />
             <SocialSvg
-              source={require("../assets/images/search.svg")}
+              Icon={SearchIcon}
               size={18}
             />
           </View>
@@ -54,7 +58,7 @@ export default function GraveBooking() {
         <View style={styles.bannerWrap}>
           <View style={styles.bannerInner}>
             <SocialSvg
-              source={require("../assets/images/grave-booking.svg")}
+              Icon={GraveBookingIcon}
               size={"100%"}
               style={{ borderRadius: 12 }}
             />

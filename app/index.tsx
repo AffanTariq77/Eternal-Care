@@ -1,29 +1,16 @@
 import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { SvgUri } from "react-native-svg";
-import { getCachedAssetUri, preloadAsset } from "../utils/assetCache";
-
-const logoSource = require("../assets/images/Eternal-Care-logo-black3.svg");
+import LogoSvg from "../assets/images/Eternal-Care-logo-black3.svg";
 
 export default function SplashScreen() {
   const router = useRouter();
-  const [svgUri, setSvgUri] = useState<string | null>(() => getCachedAssetUri(logoSource));
-
-  useEffect(() => {
-    if (svgUri) return;
-    preloadAsset(logoSource).then((uri) => {
-      if (uri) setSvgUri(uri);
-    });
-  }, []);
 
   return (
     <View style={styles.container}>
-      {svgUri && (
-        <View style={styles.logo}>
-          <SvgUri uri={svgUri} width="100%" height="100%" />
-        </View>
-      )}
+      <View style={styles.logo}>
+        <LogoSvg width="100%" height="100%" />
+      </View>
 
       <Pressable style={styles.button} onPress={() => router.push("/second")}>
         <View style={styles.chevron} />
@@ -42,8 +29,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 250,
     height: 250,
-    opacity: 1,
-    transform: [{ rotate: "0deg" }],
     marginBottom: 80,
   },
   button: {

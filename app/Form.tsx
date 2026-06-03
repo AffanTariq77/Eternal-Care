@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import BellIcon from "../assets/images/bell.svg";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 
@@ -107,7 +108,7 @@ const Input: React.FC<{
         </Pressable>
         <View style={styles.headerRight}>
           <AvatarButton size={36} />
-          <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
+          <SocialSvg Icon={BellIcon} size={20} />
         </View>
       </View>
 

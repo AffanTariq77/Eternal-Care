@@ -1,36 +1,22 @@
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SvgUri } from "react-native-svg";
-import { getCachedAssetUri } from "../utils/assetCache";
-
-const logoSource = require("../assets/images/Eternal-Care-logo-black3.svg");
+import LogoSvg from "../assets/images/Eternal-Care-logo-black3.svg";
 
 export default function SecondSplash() {
   const router = useRouter();
-  // Get cached URI instantly using useMemo (synchronous, no state updates)
-  // Asset is preloaded at app startup, so this will always be available
-  const svgUri = useMemo(() => getCachedAssetUri(logoSource), []);
 
   return (
     <View style={styles.container}>
-      {/* Top graphic (tree) - positioned to mimic the reference */}
-      {svgUri && (
-        <View style={styles.topGraphic} pointerEvents="none">
-          {/* scale the svg and nudge it so only the right portion (tree) shows */}
-          <SvgUri uri={svgUri} width={720} height={560} />
-          {/*
-              white mask rectangle overlay to hide parts of the SVG
-              adjust `maskRect` style (top/left/width/height) to hide the portion you like
-            */}
-          <View style={styles.maskRect} pointerEvents="none" />
-        </View>
-      )}
+      <View style={styles.topGraphic} pointerEvents="none">
+        <LogoSvg width={720} height={560} />
+        <View style={styles.maskRect} pointerEvents="none" />
+      </View>
 
       <View style={styles.content}>
         <Text style={styles.smallTitle}>OUR MOTTO</Text>
         <Text style={styles.bigTitle}>
-          “Honoring Memories{`\n`}Embracing Peace”
+          "Honoring Memories{`\n`}Embracing Peace"
         </Text>
       </View>
 
@@ -50,10 +36,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     position: "relative",
   },
-  // overlay rectangle to hide part of the svg; tweak values to control the hidden area
   maskRect: {
     position: "absolute",
-    // relative to the topGraphic wrapper
     left: 100,
     top: 320,
     width: 720,

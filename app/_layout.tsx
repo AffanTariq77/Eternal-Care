@@ -1,8 +1,7 @@
 import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useState } from "react";
-import { StatusBar, StyleSheet, View } from "react-native";
-import { preloadCommonAssets } from "../utils/assetCache";
+import { StatusBar, View } from "react-native";
 import { getToken, clearToken, clearUser } from "../utils/authStore";
 
 SplashScreen.preventAutoHideAsync();
@@ -12,11 +11,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function prepare() {
-      try {
-        await preloadCommonAssets();
-      } catch { /* non-critical */ }
-
-      // Check if stored JWT has expired (decode claim locally — no network needed)
       try {
         const token = await getToken();
         if (token) {
@@ -29,7 +23,7 @@ export default function RootLayout() {
             }
           }
         }
-      } catch { /* malformed token or parse error — leave token as-is */ }
+      } catch { /* malformed token — leave as-is */ }
 
       setAppIsReady(true);
     }
@@ -39,13 +33,12 @@ export default function RootLayout() {
 
   const onLayoutRootView = useCallback(async () => {
     if (appIsReady) {
-      // Hide splash screen once assets are loaded and layout is ready
       await SplashScreen.hideAsync();
     }
   }, [appIsReady]);
 
   if (!appIsReady) {
-    return null; // Don't render anything until assets are loaded
+    return null;
   }
 
   return (
@@ -55,5 +48,3 @@ export default function RootLayout() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({});

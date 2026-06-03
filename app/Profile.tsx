@@ -16,6 +16,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import SocialSvg from "../components/ui/social-svg";
+import BellIcon from "../assets/images/bell.svg";
+import ProfileIcon from "../assets/images/profile.svg";
+import EditIcon from "../assets/images/edit.svg";
 import { Colors } from "../constants/theme";
 import { getUser, saveUser, getToken } from "../utils/authStore";
 
@@ -182,7 +185,7 @@ export default function Profile() {
               <Text style={styles.backChevron}>{"<"}</Text>
             </Pressable>
             <View style={styles.headerRight}>
-              <SocialSvg source={require("../assets/images/bell.svg")} size={20} />
+              <SocialSvg Icon={BellIcon} size={20} />
             </View>
           </View>
 
@@ -194,7 +197,7 @@ export default function Profile() {
               ) : profile.avatar_url ? (
                 <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
               ) : (
-                <SocialSvg source={require("../assets/images/profile.svg")} size={64} />
+                <SocialSvg Icon={ProfileIcon} size={64} />
               )}
               <View style={styles.cameraOverlay}>
                 <Text style={styles.cameraIcon}>📷</Text>
@@ -203,7 +206,7 @@ export default function Profile() {
             <Text style={styles.editTitle}>{editing ? "Edit Profile" : "My Profile"}</Text>
             {!editing && (
               <Pressable style={styles.editIconBtn} onPress={() => setEditing(true)}>
-                <SocialSvg source={require("../assets/images/edit.svg")} size={18} />
+                <SocialSvg Icon={EditIcon} size={18} />
               </Pressable>
             )}
           </View>

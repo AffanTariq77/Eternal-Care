@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import SocialSvg from './social-svg';
+import ProfileIcon from '../../assets/images/profile.svg';
 import { getUser } from '../../utils/authStore';
 
 export default function AvatarButton({ size = 36 }: { size?: number }) {
@@ -32,7 +33,7 @@ export default function AvatarButton({ size = 36 }: { size?: number }) {
             style={{ width: imgSize, height: imgSize, borderRadius: radius }}
           />
         ) : (
-          <SocialSvg source={require('../../assets/images/profile.svg')} size={Math.max(16, size - 16)} />
+          <SocialSvg Icon={ProfileIcon} size={Math.max(16, size - 16)} />
         )}
       </View>
     </Pressable>

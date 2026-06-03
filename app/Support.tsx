@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SocialSvg from "../components/ui/social-svg";
+import BellIcon from "../assets/images/bell.svg";
+import GetInTouchIcon from "../assets/images/Get-in-touch-bro.svg";
 import { Colors } from "../constants/theme";
 
 export default function Support() {
@@ -62,7 +64,7 @@ export default function Support() {
             </Pressable>
             <View style={styles.headerRightSmall}>
               <SocialSvg
-                source={require("../assets/images/bell.svg")}
+                Icon={BellIcon}
                 size={20}
               />
             </View>
@@ -73,7 +75,7 @@ export default function Support() {
 
           <View style={styles.illustrationWrap}>
             <SocialSvg
-              source={require("../assets/images/Get-in-touch-bro.svg")}
+              Icon={GetInTouchIcon}
               size={180}
             />
           </View>

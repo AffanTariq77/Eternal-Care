@@ -13,6 +13,12 @@ import SocialSvg from "../components/ui/social-svg";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
 import { isAdmin, clearUser } from "../utils/authStore";
+import BookingIcon from "../assets/images/booking.svg";
+import SpertualIcon from "../assets/images/spertual.svg";
+import MemorealIcon from "../assets/images/memoreal.svg";
+import SupportIcon from "../assets/images/support.svg";
+import BellIcon from "../assets/images/bell.svg";
+import SearchIcon from "../assets/images/search.svg";
 
 export default function Home() {
   const router = useRouter();
@@ -26,13 +32,13 @@ export default function Home() {
   const Card = ({
     title,
     desc,
-    svg,
+    Icon,
     size,
     children,
   }: {
     title: string;
     desc: string;
-    svg: any;
+    Icon: React.ComponentType<any>;
     size?: number;
     children?: React.ReactNode;
   }) => (
@@ -47,7 +53,7 @@ export default function Home() {
         )}
       </View>
       <View style={styles.itemImgWrap}>
-        <SocialSvg source={svg} size={size ?? 140} />
+        <SocialSvg Icon={Icon} size={size ?? 140} />
       </View>
     </View>
   );
@@ -74,7 +80,7 @@ export default function Home() {
             onPress={() => (router as any).push("/Support")}
           >
             <SocialSvg
-              source={require("../assets/images/support.svg")}
+              Icon={SupportIcon}
               size={22}
             />
           </Pressable>
@@ -83,7 +89,7 @@ export default function Home() {
           </View>
           <View style={styles.iconWrap}>
             <SocialSvg
-              source={require("../assets/images/bell.svg")}
+              Icon={BellIcon}
               size={20}
             />
           </View>
@@ -130,7 +136,7 @@ export default function Home() {
             <Text style={styles.searchPlaceholder}>Search graveyard.....</Text>
             <View style={styles.searchIconWrap}>
               <SocialSvg
-                source={require("../assets/images/search.svg")}
+                Icon={SearchIcon}
                 size={18}
               />
             </View>
@@ -139,7 +145,7 @@ export default function Home() {
           <Card
             title="Grave Booking"
             desc="Seamless grave booking services with respect and care for your loved ones."
-            svg={require("../assets/images/booking.svg")}
+            Icon={BookingIcon}
             size={140}
           >
             <Pressable
@@ -153,7 +159,7 @@ export default function Home() {
           <Card
             title="Spiritual Comfort"
             desc="Providing dignified Quran and Dua recitation services for peace, blessings, and spiritual comfort"
-            svg={require("../assets/images/spertual.svg")}
+            Icon={SpertualIcon}
             size={140}
           >
             <Pressable
@@ -167,7 +173,7 @@ export default function Home() {
           <Card
             title="Memorial Care"
             desc="Professional grave cleaning and maintenance with respect and care."
-            svg={require("../assets/images/memoreal.svg")}
+            Icon={MemorealIcon}
             size={140}
           >
             <Pressable

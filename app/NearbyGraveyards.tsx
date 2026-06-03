@@ -16,6 +16,7 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import AvatarButton from "../components/ui/avatar-button";
 import SocialSvg from "../components/ui/social-svg";
+import SearchIcon from "../assets/images/search.svg";
 import { Colors } from "../constants/theme";
 
 const { width, height } = Dimensions.get("window");
@@ -139,7 +140,7 @@ export default function NearbyGraveyards() {
           onChangeText={setQuery}
           autoCorrect={false}
         />
-        <SocialSvg source={require("../assets/images/search.svg")} size={18} />
+        <SocialSvg Icon={SearchIcon} size={18} />
       </View>
 
       {locationError ? (
