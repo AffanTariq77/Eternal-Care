@@ -15,6 +15,7 @@ module.exports = {
       },
     },
     android: {
+      package: "com.affantariq.eternalcare",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -72,6 +73,11 @@ module.exports = {
     experiments: {
       typedRoutes: true,
       reactCompiler: true,
+    },
+    extra: {
+      eas: {
+        projectId: "f791125e-6317-4543-a6f1-4b23fd48cd62",
+      },
     },
   },
 };
