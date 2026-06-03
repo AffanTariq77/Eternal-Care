@@ -1,7 +1,7 @@
-import React, { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View } from "react-native";
 import { SvgUri } from "react-native-svg";
-import { getCachedAssetUri } from "../../utils/assetCache";
+import { getCachedAssetUri, preloadAsset } from "../../utils/assetCache";
 
 type Props = {
   source: any; // require(...) of svg
@@ -10,17 +10,18 @@ type Props = {
 };
 
 export default function SocialSvg({ source, size = 36, style }: Props) {
-  // Use useMemo to get cached URI instantly (synchronous, no state updates)
-  // This ensures SVG renders immediately when component mounts
-  const uri = useMemo(() => getCachedAssetUri(source), [source]);
+  const [uri, setUri] = useState<string | null>(() => getCachedAssetUri(source));
 
-  // If URI is not available (shouldn't happen if assets are preloaded), return null
-  // This prevents placeholder flicker and ensures SVGs appear instantly
-  if (!uri) {
-    // Return null instead of placeholder to avoid layout shift
-    // Assets should always be preloaded, so this is a fallback
-    return null;
-  }
+  useEffect(() => {
+    if (uri) return;
+    let cancelled = false;
+    preloadAsset(source).then((loaded) => {
+      if (!cancelled && loaded) setUri(loaded);
+    });
+    return () => { cancelled = true; };
+  }, [source]);
+
+  if (!uri) return null;
 
   // Wrap SvgUri in a clipping View so borderRadius is enforced across renderers.
   const clipStyle: any = {};
@@ -51,9 +52,3 @@ export default function SocialSvg({ source, size = 36, style }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  placeholder: {
-    backgroundColor: "transparent",
-  },
-});

@@ -1,16 +1,21 @@
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { SvgUri } from "react-native-svg";
-import { getCachedAssetUri } from "../utils/assetCache";
+import { getCachedAssetUri, preloadAsset } from "../utils/assetCache";
 
 const logoSource = require("../assets/images/Eternal-Care-logo-black3.svg");
 
 export default function SplashScreen() {
   const router = useRouter();
-  // Get cached URI instantly using useMemo (synchronous, no state updates)
-  // Asset is preloaded at app startup, so this will always be available
-  const svgUri = useMemo(() => getCachedAssetUri(logoSource), []);
+  const [svgUri, setSvgUri] = useState<string | null>(() => getCachedAssetUri(logoSource));
+
+  useEffect(() => {
+    if (svgUri) return;
+    preloadAsset(logoSource).then((uri) => {
+      if (uri) setSvgUri(uri);
+    });
+  }, []);
 
   return (
     <View style={styles.container}>

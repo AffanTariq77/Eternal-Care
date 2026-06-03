@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { Component, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -19,6 +19,23 @@ import SocialSvg from "../components/ui/social-svg";
 import { Colors } from "../constants/theme";
 
 const { width, height } = Dimensions.get("window");
+
+class MapErrorBoundary extends Component<
+  { children: React.ReactNode; onError: () => void },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch() {
+    this.props.onError();
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 
 interface Graveyard {
   id: string;
@@ -42,6 +59,7 @@ export default function NearbyGraveyards() {
   const [graveyards, setGraveyards] = useState<Graveyard[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
+  const [mapAvailable, setMapAvailable] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -148,63 +166,66 @@ export default function NearbyGraveyards() {
         <ActivityIndicator style={{ marginTop: 40 }} color="#164A40" />
       ) : viewMode === "map" ? (
         <View style={styles.mapContainer}>
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-            initialRegion={initialRegion}
-            showsUserLocation
-            showsMyLocationButton
-          >
-            {/* User location marker is handled by showsUserLocation */}
-
-            {filtered.map((g) => (
-              <Marker
-                key={g.id}
-                coordinate={{ latitude: g.lat, longitude: g.lng }}
-                pinColor={selectedId === g.id ? "#ff5a5f" : "#164A40"}
-                onPress={() => setSelectedId(g.id)}
-              >
-                <Callout onPress={() => navigateToDetail(g)} tooltip>
-                  <View style={styles.callout}>
-                    <Text style={styles.calloutTitle}>{g.name}</Text>
-                    <Text style={styles.calloutSub}>{g.city}</Text>
-                    <View style={styles.calloutBadge}>
-                      <Text style={styles.calloutBadgeText}>{g.availablePlots} plots available</Text>
-                    </View>
-                    <Text style={styles.calloutAction}>Tap to view details →</Text>
-                  </View>
-                </Callout>
-              </Marker>
-            ))}
-          </MapView>
-
-          {/* Bottom sheet: list of graveyards below map */}
-          <View style={styles.bottomSheet}>
-            <FlatList
-              data={filtered}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cardScroll}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={[styles.mapCard, selectedId === item.id && styles.mapCardSelected]}
-                  onPress={() => focusGraveyard(item)}
-                  onLongPress={() => navigateToDetail(item)}
+          <MapErrorBoundary onError={() => { setMapAvailable(false); setViewMode("list"); }}>
+            {mapAvailable ? (
+              <>
+                <MapView
+                  ref={mapRef}
+                  style={styles.map}
+                  provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+                  initialRegion={initialRegion}
+                  showsUserLocation
+                  showsMyLocationButton
                 >
-                  <Text style={styles.mapCardName} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.mapCardCity}>{item.city} · {item.distance}</Text>
-                  <View style={styles.mapCardBadge}>
-                    <Text style={styles.mapCardBadgeText}>{item.availablePlots} available</Text>
-                  </View>
-                  <Pressable style={styles.mapCardBtn} onPress={() => navigateToDetail(item)}>
-                    <Text style={styles.mapCardBtnText}>View Plots</Text>
-                  </Pressable>
-                </Pressable>
-              )}
-            />
-          </View>
+                  {filtered.map((g) => (
+                    <Marker
+                      key={g.id}
+                      coordinate={{ latitude: g.lat, longitude: g.lng }}
+                      pinColor={selectedId === g.id ? "#ff5a5f" : "#164A40"}
+                      onPress={() => setSelectedId(g.id)}
+                    >
+                      <Callout onPress={() => navigateToDetail(g)} tooltip>
+                        <View style={styles.callout}>
+                          <Text style={styles.calloutTitle}>{g.name}</Text>
+                          <Text style={styles.calloutSub}>{g.city}</Text>
+                          <View style={styles.calloutBadge}>
+                            <Text style={styles.calloutBadgeText}>{g.availablePlots} plots available</Text>
+                          </View>
+                          <Text style={styles.calloutAction}>Tap to view details →</Text>
+                        </View>
+                      </Callout>
+                    </Marker>
+                  ))}
+                </MapView>
+
+                <View style={styles.bottomSheet}>
+                  <FlatList
+                    data={filtered}
+                    keyExtractor={(item) => item.id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.cardScroll}
+                    renderItem={({ item }) => (
+                      <Pressable
+                        style={[styles.mapCard, selectedId === item.id && styles.mapCardSelected]}
+                        onPress={() => focusGraveyard(item)}
+                        onLongPress={() => navigateToDetail(item)}
+                      >
+                        <Text style={styles.mapCardName} numberOfLines={1}>{item.name}</Text>
+                        <Text style={styles.mapCardCity}>{item.city} · {item.distance}</Text>
+                        <View style={styles.mapCardBadge}>
+                          <Text style={styles.mapCardBadgeText}>{item.availablePlots} available</Text>
+                        </View>
+                        <Pressable style={styles.mapCardBtn} onPress={() => navigateToDetail(item)}>
+                          <Text style={styles.mapCardBtnText}>View Plots</Text>
+                        </Pressable>
+                      </Pressable>
+                    )}
+                  />
+                </View>
+              </>
+            ) : null}
+          </MapErrorBoundary>
         </View>
       ) : (
         <FlatList
