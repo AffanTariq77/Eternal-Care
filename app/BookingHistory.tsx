@@ -22,7 +22,23 @@ interface Booking {
   date: string;
   price: string;
   status: BookingStatus;
-  meta?: { packageExpiry?: string; selectedTime?: string; providerName?: string };
+  packageId?: string;
+  created_at?: string;
+  meta?: { packageExpiry?: string; packageId?: string; selectedTime?: string; providerName?: string };
+}
+
+const PKG_DAYS: Record<string, number> = {
+  gravecare_1d: 1, gravecare_weekly: 7, gravecare_monthly: 30,
+};
+
+function resolveExpiry(item: Booking): string | null {
+  if (item.meta?.packageExpiry) return item.meta.packageExpiry;
+  const pid = item.packageId || item.meta?.packageId || "";
+  const days = PKG_DAYS[pid];
+  if (!days) return null;
+  const base = new Date(item.created_at || item.date || Date.now());
+  base.setDate(base.getDate() + days);
+  return base.toISOString();
 }
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
@@ -54,7 +70,11 @@ export default function BookingHistory() {
         });
         if (res.ok) {
           const { bookings: raw } = await res.json();
-          setBookings((raw || []) as Booking[]);
+          setBookings((raw || []).map((b: any) => ({
+            ...b,
+            packageId: b.packageId || b.meta?.packageId,
+            created_at: b.created_at,
+          })) as Booking[]);
         }
       } catch { /* show empty */ }
       setLoading(false);
@@ -104,8 +124,8 @@ export default function BookingHistory() {
                 <Text style={styles.serviceName}>{item.service}</Text>
                 <Text style={styles.detail} numberOfLines={1}>{item.detail}</Text>
                 {item.meta?.selectedTime ? <Text style={styles.dateText}>{item.date} · {item.meta.selectedTime}</Text> : <Text style={styles.dateText}>{item.date}</Text>}
-                {item.meta?.packageExpiry ? (() => {
-                  const expiry = new Date(item.meta.packageExpiry);
+                {resolveExpiry(item) ? (() => {
+                  const expiry = new Date(resolveExpiry(item)!);
                   const isActive = expiry > new Date();
                   return (
                     <View style={[styles.pkgBadge, { backgroundColor: isActive ? "#d7efe6" : "#f0f0f0" }]}>

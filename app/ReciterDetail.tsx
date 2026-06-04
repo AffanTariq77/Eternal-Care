@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
@@ -30,8 +30,8 @@ const DAYS = buildDays();
 
 export default function ReciterDetail() {
   const router = useRouter();
-  const { id, name, price, language } = useLocalSearchParams<{
-    id: string; name: string; price: string; language: string;
+  const { id, name, price, language, image_url } = useLocalSearchParams<{
+    id: string; name: string; price: string; language: string; image_url?: string;
   }>();
 
   const [selectedDay, setSelectedDay] = useState(DAYS[0].iso);
@@ -75,14 +75,7 @@ export default function ReciterDetail() {
       selectedTime,
       price: price || "1200",
     });
-    (router as any).push({
-      pathname: "/PaymentScreen",
-      params: {
-        amount: price || "1200",
-        description: `Quran Recitation — ${name} at ${selectedTime}`,
-        returnPath: "/Home",
-      },
-    });
+    (router as any).push("/Form");
   };
 
   return (
@@ -98,7 +91,10 @@ export default function ReciterDetail() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarLetter}>{(name || "R")[0]}</Text>
+            {image_url
+              ? <Image source={{ uri: image_url }} style={styles.avatarImg} />
+              : <Text style={styles.avatarLetter}>{(name || "R")[0]}</Text>
+            }
           </View>
           <Text style={styles.reciterName}>{name}</Text>
           <Text style={styles.reciterLang}>{language}</Text>
@@ -168,6 +164,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", marginBottom: 12,
   },
   avatarLetter: { color: "#164A40", fontSize: 28, fontWeight: "900" },
+  avatarImg: { width: 70, height: 70, borderRadius: 35 },
   reciterName: { color: "#fff", fontSize: 20, fontWeight: "800" },
   reciterLang: { color: "#cfe9d8", fontSize: 14, marginTop: 4 },
   reciterPrice: { color: "#fff", fontSize: 16, fontWeight: "700", marginTop: 8 },

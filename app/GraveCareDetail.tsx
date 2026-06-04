@@ -1,9 +1,16 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import { getToken } from "../utils/authStore";
+
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
+
+const PKG_DAYS: Record<string, number> = {
+  gravecare_1d: 1, gravecare_weekly: 7, gravecare_monthly: 30,
+};
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -46,6 +53,36 @@ export default function GraveCareDetail() {
   const router = useRouter();
   const [selectedPkg, setSelectedPkg] = useState(PACKAGES[1].id);
   const [selectedDay, setSelectedDay] = useState(DAYS[0].iso);
+  const [activePlan, setActivePlan] = useState<{ label: string; expiry: Date } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API}/bookings/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const { bookings } = await res.json();
+        for (const b of bookings ?? []) {
+          const pid: string = b.packageId || b.meta?.packageId || "";
+          const days = PKG_DAYS[pid];
+          if (!days) continue;
+          const expiryStr = b.meta?.packageExpiry || (() => {
+            const d = new Date(b.created_at || b.date || Date.now());
+            d.setDate(d.getDate() + days);
+            return d.toISOString();
+          })();
+          const expiry = new Date(expiryStr);
+          if (expiry > new Date()) {
+            const pkg = PACKAGES.find((p) => p.id === pid);
+            setActivePlan({ label: pkg?.label ?? pid, expiry });
+            break;
+          }
+        }
+      } catch { /* non-critical */ }
+    })();
+  }, []);
 
   const handleConfirm = () => {
     const { setBooking } = require("../utils/bookingStore");
@@ -57,14 +94,7 @@ export default function GraveCareDetail() {
       date: selectedDay,
       price: String(pkg.price),
     });
-    (router as any).push({
-      pathname: "/PaymentScreen",
-      params: {
-        amount: String(pkg.price),
-        description: `Memorial Care — ${pkg.label}`,
-        returnPath: "/Home",
-      },
-    });
+    (router as any).push("/Form");
   };
 
   return (
@@ -76,6 +106,18 @@ export default function GraveCareDetail() {
         <Text style={styles.headerTitle}>Memorial Care</Text>
         <AvatarButton size={36} />
       </View>
+
+      {activePlan && (
+        <View style={styles.activeBanner}>
+          <View style={styles.activeBannerLeft}>
+            <Text style={styles.activeBannerTitle}>Active Plan: {activePlan.label}</Text>
+            <Text style={styles.activeBannerSub}>
+              Valid until {activePlan.expiry.toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}
+            </Text>
+          </View>
+          <View style={styles.activeDot} />
+        </View>
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <Text style={styles.desc}>
@@ -143,6 +185,16 @@ const styles = StyleSheet.create({
   },
   backText: { color: "#fff", fontWeight: "700" },
   headerTitle: { flex: 1, marginLeft: 12, fontSize: 18, fontWeight: "800" },
+  activeBanner: {
+    marginHorizontal: 18, marginBottom: 10,
+    backgroundColor: "#d7efe6", borderRadius: 14, padding: 14,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    borderWidth: 1, borderColor: "#164A40",
+  },
+  activeBannerLeft: { flex: 1 },
+  activeBannerTitle: { color: "#164A40", fontWeight: "800", fontSize: 14 },
+  activeBannerSub: { color: "#164A40", fontSize: 12, marginTop: 2, opacity: 0.8 },
+  activeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#22c55e", marginLeft: 10 },
   content: { paddingHorizontal: 18, paddingBottom: 40 },
   desc: { color: "#555", lineHeight: 22, marginBottom: 20, marginTop: 4 },
   sectionTitle: { fontSize: 16, fontWeight: "700", marginBottom: 12, marginTop: 8 },

@@ -154,14 +154,6 @@ const Input: React.FC<{
             valueRef={cityRef}
             onBlurCommit={setCity}
           />
-          <Input
-            placeholder="Postal Code"
-            defaultValue={postal}
-            valueRef={postalRef}
-            onBlurCommit={setPostal}
-            keyboardType="numeric"
-          />
-
           {/* Package & Date fields — editable text fields instead of inline pickers */}
           <Input
             placeholder="Package (e.g. Basic, gravecare_1d or pkg_basic)"
@@ -301,6 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     backgroundColor: "transparent",
+    color: "#111",
   },
   checkboxRow: { flexDirection: "row", alignItems: "center", marginTop: 12 },
   checkbox: {

@@ -1,16 +1,25 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect } from "react";
 import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../constants/theme";
+import { getConfirmedBooking, clearConfirmedBooking } from "../utils/confirmedBookingStore";
 
 export default function BookingConfirmed() {
   const router = useRouter();
-  const { bookingId, service, detail, date, price, expiry } =
-    useLocalSearchParams<{
-      bookingId: string; service: string; detail: string;
-      date: string; price: string; expiry: string;
-    }>();
+  const confirmed = getConfirmedBooking() ?? {};
+  const {
+    bookingId = "",
+    service = "",
+    detail = "",
+    date = "",
+    price = "0",
+    expiry = "",
+  } = confirmed as any;
+
+  useEffect(() => {
+    return () => { clearConfirmedBooking(); };
+  }, []);
 
   const ref = bookingId ? `#${bookingId.slice(-8).toUpperCase()}` : "";
   const hasExpiry = !!expiry;
@@ -40,7 +49,7 @@ export default function BookingConfirmed() {
           {service ? <Row label="Service" value={service} /> : null}
           {detail ? <Row label="Details" value={detail} /> : null}
           {date ? <Row label="Date" value={date} /> : null}
-          {price ? <Row label="Amount Paid" value={`PKR ${Number(price).toLocaleString()}`} /> : null}
+          {price && price !== "0" ? <Row label="Amount Paid" value={`PKR ${Number(price).toLocaleString()}`} /> : null}
         </View>
 
         {hasExpiry && (
@@ -80,7 +89,10 @@ const styles = StyleSheet.create({
     width: "100%", backgroundColor: "#fff", borderRadius: 16, padding: 18,
     marginTop: 24, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
-  row: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
+  row: {
+    flexDirection: "row", justifyContent: "space-between",
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#f0f0f0",
+  },
   rowLabel: { color: "#666", fontSize: 14 },
   rowValue: { color: "#111", fontSize: 14, fontWeight: "600", flex: 1, textAlign: "right", marginLeft: 12 },
   packageBadge: {

@@ -125,8 +125,18 @@ export default function BookingDetail() {
           ))}
         </View>
 
-        {booking.meta?.packageExpiry ? (() => {
-          const expiry = new Date(booking.meta.packageExpiry);
+        {(() => {
+          const PKG_DAYS: Record<string, number> = { gravecare_1d:1, gravecare_weekly:7, gravecare_monthly:30 };
+          const expiryStr = booking.meta?.packageExpiry || (() => {
+            const pid = booking.packageId || booking.meta?.packageId || "";
+            const days = PKG_DAYS[pid];
+            if (!days) return null;
+            const d = new Date(booking.meta?.created_at || booking.date || Date.now());
+            d.setDate(d.getDate() + days);
+            return d.toISOString();
+          })();
+          return expiryStr ? (() => {
+          const expiry = new Date(expiryStr);
           const isActive = expiry > new Date();
           return (
             <View style={[styles.packageCard, { borderColor: isActive ? "#164A40" : "#ccc" }]}>
@@ -143,7 +153,8 @@ export default function BookingDetail() {
               )}
             </View>
           );
-        })() : null}
+          })() : null;
+        })()}
 
         {booking.status === "upcoming" && (
           <Pressable

@@ -92,7 +92,7 @@ export default function GraveyardDetail() {
                 onPress={() =>
                   (router as any).push({
                     pathname: "/PlotDetail",
-                    params: { graveyardId: id, graveyardName: name, plotCode: plot.code, price: plot.price },
+                    params: { graveyardId: id, graveyardName: name, plotCode: plot.code, price: plot.price, plotId: plot.plotId ?? "" },
                   })
                 }
               >

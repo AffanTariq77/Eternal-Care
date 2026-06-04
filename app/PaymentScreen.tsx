@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -16,6 +17,15 @@ import { getBooking, clearBooking } from "../utils/bookingStore";
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 const STRIPE_KEY = process.env.EXPO_PUBLIC_STRIPE_KEY ?? "";
 
+type ConfirmedInfo = {
+  bookingId: string;
+  service: string;
+  detail: string;
+  date: string;
+  price: string;
+  expiry: string;
+};
+
 function PaymentForm() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -26,12 +36,12 @@ function PaymentForm() {
 
   const amount = parseFloat(params.amount ?? "0");
   const description = params.description ?? "Eternal Care booking";
-  const returnPath = params.returnPath ?? "/Home";
 
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
   const [intentId, setIntentId] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<ConfirmedInfo | null>(null);
 
   useEffect(() => {
     setupPaymentSheet();
@@ -47,8 +57,8 @@ function PaymentForm() {
         body: JSON.stringify({ amount, description }),
       });
       if (!res.ok) {
-        const body = await res.json();
-        Alert.alert("Payment Error", body.error ?? "Could not initialise payment.");
+        const body = await res.json().catch(() => ({}));
+        Alert.alert("Payment Error", (body as any).error ?? "Could not initialise payment.");
         return;
       }
       const { clientSecret, intentId: id } = await res.json();
@@ -64,8 +74,16 @@ function PaymentForm() {
         return;
       }
       setReady(true);
-    } catch {
-      Alert.alert("Error", "Could not reach the payment server.");
+    } catch (e: any) {
+      const msg = (e?.message ?? "").toLowerCase();
+      if (msg.includes("native") || msg.includes("module") || msg.includes("stripe")) {
+        Alert.alert(
+          "APK Required",
+          "Stripe payments need the APK build, not Expo Go. Please install the preview APK.",
+        );
+      } else {
+        Alert.alert("Error", "Could not reach the payment server. Check your connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -73,21 +91,20 @@ function PaymentForm() {
 
   const handlePay = async () => {
     if (!ready) return;
+    setReady(false);
     const { error } = await presentPaymentSheet();
     if (error) {
-      if (error.code !== "Canceled") {
-        Alert.alert("Payment Failed", error.message);
-      }
+      if (error.code !== "Canceled") Alert.alert("Payment Failed", error.message);
+      setReady(true);
       return;
     }
-    await confirmBooking();
+    await processBooking();
   };
 
-  const confirmBooking = async () => {
+  const processBooking = async () => {
     const token = await getToken();
     const ctx = getBooking();
 
-    // Calculate package expiry based on packageId
     const expiryDays: Record<string, number> = {
       gravecare_1d: 1, gravecare_weekly: 7, gravecare_monthly: 30,
     };
@@ -96,6 +113,7 @@ function PaymentForm() {
       ? (() => { const d = new Date(); d.setDate(d.getDate() + expiryDays[pkg]); return d.toISOString(); })()
       : null;
 
+    const bookingDate = ctx.date ?? new Date().toISOString();
     const fullMeta = {
       ...ctx,
       description,
@@ -104,9 +122,19 @@ function PaymentForm() {
       ...(packageExpiry ? { packageExpiry } : {}),
     };
 
-    // 1. Create the booking record
-    let bookingId: string | null = null;
-    let bookingDate = ctx.date ?? new Date().toISOString();
+    // Show confirmation immediately — Stripe payment already succeeded.
+    // API calls below happen in the background.
+    await clearBooking();
+    setConfirmed({
+      bookingId: "",
+      service: fullMeta.serviceType ?? "",
+      detail: ctx.detail ?? ctx.service ?? "",
+      date: bookingDate.substring(0, 10),
+      price: String(amount),
+      expiry: packageExpiry ?? "",
+    });
+
+    // Create & pay booking record in background (non-blocking for the UI)
     try {
       const res = await fetch(`${API}/bookings`, {
         method: "POST",
@@ -119,39 +147,97 @@ function PaymentForm() {
       });
       if (res.ok) {
         const body = await res.json();
-        bookingId = body.booking?.id ?? null;
+        const bookingId: string = body.booking?.id ?? "";
+        if (bookingId) {
+          // Update confirmation ref now that we have the ID
+          setConfirmed((prev) => prev ? { ...prev, bookingId } : prev);
+          try {
+            await fetch(`${API}/bookings/${bookingId}/pay`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ amount, method: "stripe", receipt: intentId }),
+            });
+          } catch { /* non-blocking */ }
+        }
       }
-    } catch {
-      // booking creation failed — still navigate to confirmed so user knows payment went through
-    }
-
-    // 2. Mark the booking paid (also updates plot status to 'reserved' in backend)
-    if (bookingId) {
-      try {
-        await fetch(`${API}/bookings/${bookingId}/pay`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ amount, method: "stripe", receipt: intentId }),
-        });
-      } catch {
-        // non-blocking
-      }
-    }
-
-    clearBooking();
-    (router as any).replace({
-      pathname: "/BookingConfirmed",
-      params: {
-        bookingId: bookingId ?? "",
-        service: fullMeta.serviceType ?? "",
-        detail: ctx.detail ?? ctx.service ?? "",
-        date: bookingDate.substring(0, 10),
-        price: String(amount),
-        expiry: packageExpiry ?? "",
-      },
-    });
+    } catch { /* non-blocking — confirmation already shown */ }
   };
 
+  // ── Confirmation view (replaces payment UI in-place after success) ──────────
+  if (confirmed) {
+    const ref = confirmed.bookingId ? `#${confirmed.bookingId.slice(-8).toUpperCase()}` : "";
+    const hasExpiry = !!confirmed.expiry;
+    const expiryDate = hasExpiry
+      ? new Date(confirmed.expiry).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })
+      : "";
+
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.confirmContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.checkWrap}>
+            <Text style={styles.checkMark}>✓</Text>
+          </View>
+
+          <Text style={styles.confirmTitle}>Booking Confirmed!</Text>
+          {ref ? <Text style={styles.confirmRef}>{ref}</Text> : null}
+
+          <View style={styles.confirmCard}>
+            {confirmed.service ? (
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Service</Text>
+                <Text style={styles.confirmValue}>{confirmed.service}</Text>
+              </View>
+            ) : null}
+            {confirmed.detail ? (
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Details</Text>
+                <Text style={styles.confirmValue}>{confirmed.detail}</Text>
+              </View>
+            ) : null}
+            {confirmed.date ? (
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Date</Text>
+                <Text style={styles.confirmValue}>{confirmed.date}</Text>
+              </View>
+            ) : null}
+            {confirmed.price && confirmed.price !== "0" ? (
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Amount Paid</Text>
+                <Text style={styles.confirmValue}>PKR {Number(confirmed.price).toLocaleString()}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {hasExpiry && (
+            <View style={styles.pkgBadge}>
+              <Text style={styles.pkgBadgeTitle}>Package Active</Text>
+              <Text style={styles.pkgBadgeSub}>Valid until {expiryDate}</Text>
+            </View>
+          )}
+
+          <Text style={styles.confirmNote}>
+            Your booking is confirmed. You will be notified when it is reviewed.
+          </Text>
+
+          <Pressable
+            style={styles.historyBtn}
+            onPress={() => (router as any).replace("/BookingHistory")}
+          >
+            <Text style={styles.historyBtnText}>View My Bookings</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.homeBtn}
+            onPress={() => (router as any).replace("/Home")}
+          >
+            <Text style={styles.homeBtnText}>Back to Home</Text>
+          </Pressable>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Payment view ─────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -202,6 +288,8 @@ export default function PaymentScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#f8f9fa" },
+
+  // Payment view
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 18, paddingVertical: 14,
@@ -233,4 +321,41 @@ const styles = StyleSheet.create({
   },
   payBtnDisabled: { opacity: 0.5 },
   payBtnText: { color: "#fff", fontWeight: "800", fontSize: 17 },
+
+  // Confirmation view
+  confirmContainer: { alignItems: "center", padding: 28, paddingBottom: 40 },
+  checkWrap: {
+    width: 120, height: 120, borderRadius: 60, backgroundColor: "#22c55e",
+    alignItems: "center", justifyContent: "center", marginTop: 40,
+  },
+  checkMark: { color: "#fff", fontSize: 60, fontWeight: "700" },
+  confirmTitle: { fontSize: 24, fontWeight: "800", marginTop: 20, color: "#164A40" },
+  confirmRef: { fontSize: 14, color: "#888", marginTop: 6, letterSpacing: 1 },
+  confirmCard: {
+    width: "100%", backgroundColor: "#fff", borderRadius: 16, padding: 18,
+    marginTop: 24, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
+  },
+  confirmRow: {
+    flexDirection: "row", justifyContent: "space-between",
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#f0f0f0",
+  },
+  confirmLabel: { color: "#666", fontSize: 14 },
+  confirmValue: { color: "#111", fontSize: 14, fontWeight: "600", flex: 1, textAlign: "right", marginLeft: 12 },
+  pkgBadge: {
+    width: "100%", backgroundColor: "#d7efe6", borderRadius: 14, padding: 16,
+    marginTop: 16, alignItems: "center", borderWidth: 1, borderColor: "#164A40",
+  },
+  pkgBadgeTitle: { color: "#164A40", fontWeight: "800", fontSize: 16 },
+  pkgBadgeSub: { color: "#164A40", fontSize: 13, marginTop: 4 },
+  confirmNote: { color: "#888", textAlign: "center", marginTop: 20, fontSize: 13, lineHeight: 20, paddingHorizontal: 8 },
+  historyBtn: {
+    width: "100%", backgroundColor: "#164A40", borderRadius: 14,
+    paddingVertical: 14, alignItems: "center", marginTop: 24,
+  },
+  historyBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  homeBtn: {
+    width: "100%", borderWidth: 1, borderColor: "#164A40", borderRadius: 14,
+    paddingVertical: 14, alignItems: "center", marginTop: 12,
+  },
+  homeBtnText: { color: "#164A40", fontWeight: "700", fontSize: 15 },
 });

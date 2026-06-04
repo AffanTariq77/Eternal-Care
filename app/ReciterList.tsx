@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -21,6 +22,7 @@ interface Reciter {
   price: number;
   available: boolean;
   bio: string;
+  image_url?: string;
 }
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
@@ -54,6 +56,7 @@ export default function ReciterList() {
             price: parseFloat(p.price) || 0,
             available: p.available ?? true,
             bio: p.bio ?? '',
+            image_url: p.image_url || null,
           })));
         }
       } catch { /* show empty */ }
@@ -118,12 +121,15 @@ export default function ReciterList() {
               onPress={() =>
                 (router as any).push({
                   pathname: "/ReciterDetail",
-                  params: { id: item.id, name: item.name, price: item.price, language: item.language },
+                  params: { id: item.id, name: item.name, price: item.price, language: item.language, image_url: item.image_url ?? "" },
                 })
               }
             >
               <View style={styles.avatar}>
-                <Text style={styles.avatarLetter}>{item.name[0]}</Text>
+                {item.image_url
+                  ? <Image source={{ uri: item.image_url }} style={styles.avatarImg} />
+                  : <Text style={styles.avatarLetter}>{item.name[0]}</Text>
+                }
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.cardName}>{item.name}</Text>
@@ -186,6 +192,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", marginRight: 12,
   },
   avatarLetter: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  avatarImg: { width: 48, height: 48, borderRadius: 24 },
   cardBody: { flex: 1 },
   cardName: { fontSize: 15, fontWeight: "700", color: "#111", marginBottom: 2 },
   cardLang: { color: "#666", fontSize: 12, marginBottom: 4 },

@@ -34,7 +34,7 @@ const FILTERS: (BookingStatus | "all")[] = ["all", "pending", "confirmed", "comp
 
 export default function ManageBookings() {
   const router = useRouter();
-  const [filter, setFilter] = useState<BookingStatus | "all">("all");
+  const [filter, setFilter] = useState<BookingStatus | "all">("all"); // default all so new bookings are visible immediately
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export default function ManageBookings() {
             providerName: b.meta?.providerName || '',
             date: (b.date || b.created_at || '').substring(0, 10),
             time: b.meta?.selectedTime || '',
-            status: (b.status === 'paid' ? 'confirmed' : b.status) as BookingStatus,
+            status: (b.meta?.completed_at ? 'completed' : b.status === 'paid' ? 'confirmed' : b.status) as BookingStatus,
             price: String(b.meta?.price || b.amount || 0),
             packageExpiry: b.meta?.packageExpiry || '',
           })));

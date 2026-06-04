@@ -7,11 +7,12 @@ import { Colors } from "../constants/theme";
 
 export default function PlotDetail() {
   const router = useRouter();
-  const { graveyardId, graveyardName, plotCode, price } = useLocalSearchParams<{
+  const { graveyardId, graveyardName, plotCode, price, plotId } = useLocalSearchParams<{
     graveyardId: string;
     graveyardName: string;
     plotCode: string;
     price: string;
+    plotId?: string;
   }>();
 
   const handleBook = () => {
@@ -26,16 +27,10 @@ export default function PlotDetail() {
       graveyardId,
       graveyardName,
       plotCode,
+      plotId: plotId || undefined,
       price: price || "15000",
     });
-    (router as any).push({
-      pathname: "/PaymentScreen",
-      params: {
-        amount: price || "15000",
-        description: `Grave Booking — Plot ${plotCode}, ${graveyardName}`,
-        returnPath: "/Home",
-      },
-    });
+    (router as any).push("/Form");
   };
 
   return (
