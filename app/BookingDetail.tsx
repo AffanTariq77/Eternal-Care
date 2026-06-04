@@ -39,6 +39,7 @@ export default function BookingDetail() {
               price: String(raw.meta?.price || raw.amount || 0),
               status: ['paid', 'confirmed', 'pending'].includes(raw.status) ? 'upcoming' : (raw.status || 'upcoming'),
               packageId: raw.package_id,
+              meta: raw.meta || {},
             });
           }
         }
@@ -124,6 +125,26 @@ export default function BookingDetail() {
           ))}
         </View>
 
+        {booking.meta?.packageExpiry ? (() => {
+          const expiry = new Date(booking.meta.packageExpiry);
+          const isActive = expiry > new Date();
+          return (
+            <View style={[styles.packageCard, { borderColor: isActive ? "#164A40" : "#ccc" }]}>
+              <Text style={[styles.packageCardTitle, { color: isActive ? "#164A40" : "#888" }]}>
+                {isActive ? "Package Active" : "Package Expired"}
+              </Text>
+              <Text style={styles.packageCardDate}>
+                {isActive ? "Valid until" : "Expired on"} {expiry.toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}
+              </Text>
+              {isActive && (
+                <Pressable style={styles.upgradeBtn} onPress={() => (router as any).back()}>
+                  <Text style={styles.upgradeBtnText}>Upgrade Package</Text>
+                </Pressable>
+              )}
+            </View>
+          );
+        })() : null}
+
         {booking.status === "upcoming" && (
           <Pressable
             style={[styles.cancelBtn, cancelling && { opacity: 0.6 }]}
@@ -185,4 +206,14 @@ const styles = StyleSheet.create({
   },
   reportBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   empty: { textAlign: "center", color: "#999", marginTop: 60 },
+  packageCard: {
+    borderWidth: 1.5, borderRadius: 16, padding: 18, marginBottom: 16,
+    backgroundColor: "#f0faf5",
+  },
+  packageCardTitle: { fontSize: 16, fontWeight: "800", marginBottom: 4 },
+  packageCardDate: { color: "#555", fontSize: 14, marginBottom: 10 },
+  upgradeBtn: {
+    backgroundColor: "#164A40", borderRadius: 10, paddingVertical: 10, alignItems: "center",
+  },
+  upgradeBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

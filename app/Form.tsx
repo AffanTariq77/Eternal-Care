@@ -237,16 +237,16 @@ const Input: React.FC<{
                     return;
                   }
 
-                  // create booking on server with status 'pending' and include form as meta
-                  const resp = await api.createBooking(merged.packageId, merged.date, merged);
-                  const booking = resp && resp.booking ? resp.booking : null;
-                  if (booking && booking.id) {
-                    setBooking({ ...merged, id: booking.id, status: booking.status });
-                  } else {
-                    // fallback to local store id if server didn't return id
-                    setBooking(merged);
-                  }
-                  (router as any).push("/Payment");
+                  // store form data — booking is created once after payment succeeds
+                  setBooking(merged);
+                  (router as any).push({
+                    pathname: "/PaymentScreen",
+                    params: {
+                      amount: String(merged.price || 0),
+                      description: `${merged.service || 'Eternal Care'}${merged.detail ? ' — ' + merged.detail : ''}`,
+                      returnPath: "/Home",
+                    },
+                  });
                 } catch (err: any) {
                   alert(err?.error || err?.message || 'Failed to save booking');
                 } finally {

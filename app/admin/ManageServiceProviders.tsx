@@ -1,12 +1,12 @@
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
 import { adminGetProviders, adminDeleteProvider } from "../utils/api";
 
-interface Provider { id: string; name: string; type: string; contact: string; available: boolean }
+interface Provider { id: string; name: string; type: string; contact: string; available: boolean; image_url?: string }
 
 const TYPE_LABELS: Record<string, string> = {
   quran_recitation: "Quran Recitation",
@@ -31,6 +31,7 @@ export default function ManageServiceProviders() {
             type: p.type || p.service_type || '',
             contact: p.contact || p.phone || '',
             available: p.available ?? true,
+            image_url: p.image_url || null,
           })));
         } catch { /* show empty */ }
         if (active) setLoading(false);
@@ -75,7 +76,14 @@ export default function ManageServiceProviders() {
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <View style={[styles.avDot, { backgroundColor: item.available ? "#22c55e" : "#ef4444" }]} />
+              {item.image_url ? (
+                <Image source={{ uri: item.image_url }} style={styles.providerAvatar} />
+              ) : (
+                <View style={[styles.providerAvatar, styles.providerAvatarPlaceholder]}>
+                  <Text style={styles.providerAvatarInitial}>{item.name[0]?.toUpperCase()}</Text>
+                </View>
+              )}
+              <View style={[styles.avDot, { backgroundColor: item.available ? "#22c55e" : "#ef4444", position: "absolute", left: 46, top: 12 }]} />
               <View style={styles.info}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.sub}>{TYPE_LABELS[item.type] || item.type} · {item.contact}</Text>
@@ -109,7 +117,10 @@ const styles = StyleSheet.create({
   addBtnText: { color: "#fff", fontWeight: "700" },
   list: { paddingHorizontal: 18, paddingBottom: 30 },
   card: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: "row", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  avDot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
+  avDot: { width: 10, height: 10, borderRadius: 5 },
+  providerAvatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
+  providerAvatarPlaceholder: { backgroundColor: "#d7efe6", alignItems: "center", justifyContent: "center" },
+  providerAvatarInitial: { color: "#164A40", fontWeight: "700", fontSize: 18 },
   info: { flex: 1 },
   name: { fontSize: 15, fontWeight: "700", color: "#111" },
   sub: { color: "#666", fontSize: 12, marginTop: 2 },

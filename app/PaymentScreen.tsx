@@ -87,21 +87,34 @@ function PaymentForm() {
     const token = await getToken();
     const ctx = getBooking();
 
+    // Calculate package expiry based on packageId
+    const expiryDays: Record<string, number> = {
+      gravecare_1d: 1, gravecare_weekly: 7, gravecare_monthly: 30,
+    };
+    const pkg = ctx.packageId ?? "";
+    const packageExpiry = expiryDays[pkg]
+      ? (() => { const d = new Date(); d.setDate(d.getDate() + expiryDays[pkg]); return d.toISOString(); })()
+      : null;
+
+    const fullMeta = {
+      ...ctx,
+      description,
+      serviceType: ctx.service ?? description,
+      price: amount,
+      ...(packageExpiry ? { packageExpiry } : {}),
+    };
+
     // 1. Create the booking record
     let bookingId: string | null = null;
+    let bookingDate = ctx.date ?? new Date().toISOString();
     try {
       const res = await fetch(`${API}/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           packageId: ctx.packageId ?? "direct_payment",
-          date: ctx.date ?? new Date().toISOString(),
-          serviceType: ctx.service ?? description,
-          graveyardId: ctx.graveyardId ?? null,
-          plotId: ctx.plotId ?? null,
-          providerId: ctx.providerId ?? null,
-          amount,
-          meta: { description, ...ctx },
+          date: bookingDate,
+          meta: fullMeta,
         }),
       });
       if (res.ok) {
@@ -112,7 +125,7 @@ function PaymentForm() {
       // booking creation failed — still navigate to confirmed so user knows payment went through
     }
 
-    // 2. Mark the booking paid
+    // 2. Mark the booking paid (also updates plot status to 'reserved' in backend)
     if (bookingId) {
       try {
         await fetch(`${API}/bookings/${bookingId}/pay`, {
@@ -121,12 +134,22 @@ function PaymentForm() {
           body: JSON.stringify({ amount, method: "stripe", receipt: intentId }),
         });
       } catch {
-        // payment record creation failed — non-blocking
+        // non-blocking
       }
     }
 
     clearBooking();
-    (router as any).replace("/BookingConfirmed");
+    (router as any).replace({
+      pathname: "/BookingConfirmed",
+      params: {
+        bookingId: bookingId ?? "",
+        service: fullMeta.serviceType ?? "",
+        detail: ctx.detail ?? ctx.service ?? "",
+        date: bookingDate.substring(0, 10),
+        price: String(amount),
+        expiry: packageExpiry ?? "",
+      },
+    });
   };
 
   return (

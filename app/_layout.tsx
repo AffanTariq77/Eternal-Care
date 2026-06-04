@@ -2,7 +2,9 @@ import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useState } from "react";
 import { StatusBar, View } from "react-native";
-import { getToken, clearToken, clearUser } from "../utils/authStore";
+import { getToken, clearToken, clearUser, getUser, saveUser } from "../utils/authStore";
+
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +22,20 @@ export default function RootLayout() {
             if (payload.exp && payload.exp * 1000 < Date.now()) {
               await clearToken();
               await clearUser();
+            } else {
+              // Ensure cached user has avatar_url (missing from older sessions)
+              const cached = await getUser();
+              if (cached?.id && !cached.avatar_url) {
+                try {
+                  const res = await fetch(`${API}/profile/${cached.id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  if (res.ok) {
+                    const { user } = await res.json();
+                    await saveUser({ ...cached, ...user });
+                  }
+                } catch { /* non-critical */ }
+              }
             }
           }
         }

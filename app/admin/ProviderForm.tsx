@@ -1,9 +1,16 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator, Image, Pressable, ScrollView,
+  StyleSheet, Text, TextInput, View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 import { Colors } from "../../constants/theme";
 import { adminCreateProvider, adminUpdateProvider } from "../utils/api";
+import { getToken } from "../../utils/authStore";
+
+const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 const TYPES = [
   { key: "quran_recitation", label: "Quran Recitation" },
@@ -21,16 +28,55 @@ export default function ProviderForm() {
   const priceRef = useRef("");
   const [type, setType] = useState(initType || "quran_recitation");
   const [saving, setSaving] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") { alert("Photo library access is needed to add a provider photo."); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.[0]) setImageUri(result.assets[0].uri);
+  };
+
+  const uploadImage = async (providerId: string) => {
+    if (!imageUri) return;
+    const filename = imageUri.split("/").pop() ?? "image.jpg";
+    const match = /\.(\w+)$/.exec(filename);
+    const mimeType = match ? `image/${match[1]}` : "image/jpeg";
+    const formData = new FormData();
+    formData.append("image", { uri: imageUri, name: filename, type: mimeType } as any);
+    const token = await getToken();
+    await fetch(`${API}/admin/providers/${providerId}/image`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+  };
 
   const handleSave = async () => {
     if (!nameRef.current.trim()) { alert("Name is required."); return; }
     setSaving(true);
     try {
-      const payload = { name: nameRef.current.trim(), type, contact: contactRef.current.trim(), price: Number(priceRef.current) || 0 };
-      if (mode === 'edit' && id) {
+      const payload = {
+        name: nameRef.current.trim(),
+        type,
+        contact: contactRef.current.trim(),
+        price: Number(priceRef.current) || 0,
+      };
+      let savedId: string | undefined;
+      if (mode === "edit" && id) {
         await adminUpdateProvider(id, payload);
+        savedId = id;
       } else {
-        await adminCreateProvider(payload);
+        const result: any = await adminCreateProvider(payload);
+        savedId = result?.id;
+      }
+      if (imageUri && savedId) {
+        try { await uploadImage(savedId); } catch { /* non-critical */ }
       }
       (router as any).back();
     } catch (e: any) {
@@ -49,6 +95,18 @@ export default function ProviderForm() {
         <Text style={styles.headerTitle}>{mode === "edit" ? "Edit Provider" : "Add Provider"}</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
+
+        <View style={styles.fieldWrap}>
+          <Text style={styles.fieldLabel}>Provider Photo</Text>
+          <Pressable style={styles.imagePicker} onPress={pickImage}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+            ) : (
+              <Text style={styles.imagePickerText}>Tap to choose photo</Text>
+            )}
+          </Pressable>
+        </View>
+
         <View style={styles.fieldWrap}>
           <Text style={styles.fieldLabel}>Name *</Text>
           <TextInput style={styles.input} placeholder="Provider name" placeholderTextColor="#9AA" defaultValue={nameRef.current} onChangeText={(v) => { nameRef.current = v; }} autoCorrect={false} />
@@ -71,6 +129,7 @@ export default function ProviderForm() {
             ))}
           </View>
         </View>
+
         <Pressable style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Provider</Text>}
         </Pressable>
@@ -89,6 +148,13 @@ const styles = StyleSheet.create({
   fieldWrap: { marginBottom: 16 },
   fieldLabel: { fontSize: 13, color: "#555", marginBottom: 6, fontWeight: "600" },
   input: { borderWidth: 1, borderColor: "#164A40", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: "#111" },
+  imagePicker: {
+    height: 120, borderWidth: 1, borderColor: "#164A40", borderRadius: 12,
+    borderStyle: "dashed", alignItems: "center", justifyContent: "center",
+    backgroundColor: "#f9fafb", overflow: "hidden",
+  },
+  imagePreview: { width: "100%", height: "100%", resizeMode: "cover" },
+  imagePickerText: { color: "#9AA", fontSize: 14 },
   typeRow: { flexDirection: "row", gap: 10 },
   typeBtn: { flex: 1, borderWidth: 1, borderColor: "#164A40", borderRadius: 10, paddingVertical: 10, alignItems: "center" },
   typeBtnActive: { backgroundColor: "#164A40" },

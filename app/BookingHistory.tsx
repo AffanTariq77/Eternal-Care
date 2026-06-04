@@ -22,6 +22,7 @@ interface Booking {
   date: string;
   price: string;
   status: BookingStatus;
+  meta?: { packageExpiry?: string; selectedTime?: string; providerName?: string };
 }
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
@@ -102,7 +103,18 @@ export default function BookingHistory() {
               <View style={styles.cardLeft}>
                 <Text style={styles.serviceName}>{item.service}</Text>
                 <Text style={styles.detail} numberOfLines={1}>{item.detail}</Text>
-                <Text style={styles.dateText}>{item.date}</Text>
+                {item.meta?.selectedTime ? <Text style={styles.dateText}>{item.date} · {item.meta.selectedTime}</Text> : <Text style={styles.dateText}>{item.date}</Text>}
+                {item.meta?.packageExpiry ? (() => {
+                  const expiry = new Date(item.meta.packageExpiry);
+                  const isActive = expiry > new Date();
+                  return (
+                    <View style={[styles.pkgBadge, { backgroundColor: isActive ? "#d7efe6" : "#f0f0f0" }]}>
+                      <Text style={[styles.pkgBadgeText, { color: isActive ? "#164A40" : "#888" }]}>
+                        {isActive ? `Active until ${expiry.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}` : "Expired"}
+                      </Text>
+                    </View>
+                  );
+                })() : null}
               </View>
               <View style={styles.cardRight}>
                 <Text style={styles.priceText}>PKR {Number(item.price).toLocaleString()}</Text>
@@ -158,4 +170,6 @@ const styles = StyleSheet.create({
   badge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
   badgeText: { fontSize: 12, fontWeight: "600" },
   empty: { textAlign: "center", color: "#999", marginTop: 40 },
+  pkgBadge: { marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" },
+  pkgBadgeText: { fontSize: 11, fontWeight: "600" },
 });

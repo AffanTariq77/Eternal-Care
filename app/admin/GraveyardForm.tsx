@@ -125,22 +125,7 @@ export default function GraveyardForm() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Field label="Name *" fieldRef={nameRef} placeholder="e.g. Karachi Muslim Graveyard" />
-        <Field label="City *" fieldRef={cityRef} placeholder="e.g. Karachi" />
-        <View style={styles.fieldWrap}>
-          <Text style={styles.fieldLabel}>Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Full address"
-            placeholderTextColor="#9AA"
-            value={address}
-            onChangeText={setAddress}
-            autoCorrect={false}
-            multiline
-          />
-        </View>
-
-        {/* Google Places search */}
+        {/* Google Places search — always shown first */}
         <View style={styles.fieldWrap}>
           <Text style={styles.fieldLabel}>Search on Google Maps</Text>
           <View style={styles.searchRow}>
@@ -177,7 +162,22 @@ export default function GraveyardForm() {
           </View>
         )}
 
-        <Text style={styles.manualLabel}>Or enter coordinates manually</Text>
+        <Text style={styles.manualLabel}>Or fill in the details manually</Text>
+
+        <Field label="Name *" fieldRef={nameRef} placeholder="e.g. Karachi Muslim Graveyard" />
+        <Field label="City *" fieldRef={cityRef} placeholder="e.g. Karachi" />
+        <View style={styles.fieldWrap}>
+          <Text style={styles.fieldLabel}>Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Full address"
+            placeholderTextColor="#9AA"
+            value={address}
+            onChangeText={setAddress}
+            autoCorrect={false}
+            multiline
+          />
+        </View>
 
         {/* Controlled lat/lng inputs so auto-fill is visible */}
         <View style={styles.fieldWrap}>
