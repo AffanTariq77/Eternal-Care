@@ -2,14 +2,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { Component, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Callout, UrlTile } from "react-native-maps";
 import { Colors } from "../constants/theme";
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
@@ -87,11 +86,18 @@ export default function GraveyardMap() {
             {mapAvailable ? (
               <MapView
                 style={styles.map}
-                provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+                mapType="none"
                 initialRegion={region}
                 showsUserLocation
                 showsMyLocationButton
               >
+                <UrlTile
+                  urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maximumZ={19}
+                  tileSize={256}
+                  flipY={false}
+                  shouldReplaceMapContent
+                />
                 <Marker
                   coordinate={{ latitude: graveyard.lat, longitude: graveyard.lng }}
                   pinColor="#164A40"

@@ -13,12 +13,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/theme";
 import { adminCreateGraveyard, adminUpdateGraveyard } from "../utils/api";
 
-const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ?? "";
-
 type PlaceResult = {
-  name: string;
-  formatted_address: string;
-  geometry: { location: { lat: number; lng: number } };
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
 };
 
 export default function GraveyardForm() {
@@ -29,8 +28,8 @@ export default function GraveyardForm() {
 
   const nameRef = useRef(initName || "");
   const cityRef = useRef(initCity || "");
-  const addressRef = useRef("");
   const totalPlotsRef = useRef("");
+  const [address, setAddress] = useState("");
 
   // lat/lng as controlled state so auto-fill reflects in the inputs
   const [lat, setLat] = useState("");
@@ -48,23 +47,26 @@ export default function GraveyardForm() {
     setSearching(true);
     setSearchResults([]);
     try {
-      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${MAPS_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      setSearchResults(data.results?.slice(0, 5) ?? []);
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&addressdetails=1`;
+      const res = await fetch(url, {
+        headers: { "User-Agent": "EternalCare/1.0", "Accept-Language": "en" },
+      });
+      const data: PlaceResult[] = await res.json();
+      if (!data.length) alert("No locations found. Try a different search term.");
+      setSearchResults(data);
     } catch {
-      alert("Could not reach Google Maps. Check your internet connection.");
+      alert("Could not search locations. Check your internet connection.");
     } finally {
       setSearching(false);
     }
   };
 
   const selectPlace = (place: PlaceResult) => {
-    setLat(String(place.geometry.location.lat));
-    setLng(String(place.geometry.location.lng));
-    addressRef.current = place.formatted_address;
+    setLat(place.lat);
+    setLng(place.lon);
+    setAddress(place.display_name);
     setSearchResults([]);
-    setSearchQuery(place.name);
+    setSearchQuery(place.display_name.split(",")[0]);
   };
 
   const handleSave = async () => {
@@ -77,7 +79,7 @@ export default function GraveyardForm() {
       const payload: any = {
         name: nameRef.current.trim(),
         city: cityRef.current.trim(),
-        address: addressRef.current.trim() || undefined,
+        address: address.trim() || undefined,
         lat: lat ? Number(lat) : undefined,
         lng: lng ? Number(lng) : undefined,
         total_plots: totalPlotsRef.current ? Number(totalPlotsRef.current) : undefined,
@@ -125,7 +127,18 @@ export default function GraveyardForm() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Field label="Name *" fieldRef={nameRef} placeholder="e.g. Karachi Muslim Graveyard" />
         <Field label="City *" fieldRef={cityRef} placeholder="e.g. Karachi" />
-        <Field label="Address" fieldRef={addressRef} placeholder="Full address" />
+        <View style={styles.fieldWrap}>
+          <Text style={styles.fieldLabel}>Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Full address"
+            placeholderTextColor="#9AA"
+            value={address}
+            onChangeText={setAddress}
+            autoCorrect={false}
+            multiline
+          />
+        </View>
 
         {/* Google Places search */}
         <View style={styles.fieldWrap}>
@@ -152,10 +165,10 @@ export default function GraveyardForm() {
 
         {searchResults.length > 0 && (
           <View style={styles.resultsList}>
-            {searchResults.map((place, i) => (
-              <Pressable key={i} style={styles.resultItem} onPress={() => selectPlace(place)}>
-                <Text style={styles.resultName}>{place.name}</Text>
-                <Text style={styles.resultAddr} numberOfLines={1}>{place.formatted_address}</Text>
+            {searchResults.map((place) => (
+              <Pressable key={place.place_id} style={styles.resultItem} onPress={() => selectPlace(place)}>
+                <Text style={styles.resultName}>{place.display_name.split(",")[0]}</Text>
+                <Text style={styles.resultAddr} numberOfLines={2}>{place.display_name}</Text>
               </Pressable>
             ))}
             <Pressable onPress={() => setSearchResults([])} style={styles.dismissBtn}>

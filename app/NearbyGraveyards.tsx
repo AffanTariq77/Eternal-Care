@@ -9,10 +9,9 @@ import {
   TextInput,
   View,
   Dimensions,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Callout, UrlTile } from "react-native-maps";
 import * as Location from "expo-location";
 import AvatarButton from "../components/ui/avatar-button";
 import SocialSvg from "../components/ui/social-svg";
@@ -173,11 +172,18 @@ export default function NearbyGraveyards() {
                 <MapView
                   ref={mapRef}
                   style={styles.map}
-                  provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+                  mapType="none"
                   initialRegion={initialRegion}
                   showsUserLocation
                   showsMyLocationButton
                 >
+                  <UrlTile
+                    urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maximumZ={19}
+                    tileSize={256}
+                    flipY={false}
+                    shouldReplaceMapContent
+                  />
                   {filtered.map((g) => (
                     <Marker
                       key={g.id}
