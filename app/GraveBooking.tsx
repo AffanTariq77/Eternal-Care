@@ -16,6 +16,7 @@ import SearchIcon from "../assets/images/search.svg";
 import GraveBookingIcon from "../assets/images/grave-booking.svg";
 import AvatarButton from "../components/ui/avatar-button";
 import { Colors } from "../constants/theme";
+import BottomNav from "../components/ui/bottom-nav";
 
 export default function GraveBooking() {
   const router = useRouter();
@@ -23,7 +24,8 @@ export default function GraveBooking() {
   // search and header use normal layout flow now
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={{ flex: 1, backgroundColor: Colors.light.background || "#fff" }}>
+    <SafeAreaView style={[styles.safe, { flex: 1 }]} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <Pressable style={styles.back} onPress={() => (router as any).back()}>
@@ -31,7 +33,7 @@ export default function GraveBooking() {
         </Pressable>
         <View style={styles.headerRight}>
           <AvatarButton size={36} />
-          <SocialSvg Icon={BellIcon} size={20} />
+          <Pressable onPress={() => (router as any).push("/Notifications")}><SocialSvg Icon={BellIcon} size={20} /></Pressable>
         </View>
       </View>
 
@@ -121,6 +123,8 @@ export default function GraveBooking() {
         </Pressable>
       </ScrollView>
     </SafeAreaView>
+    <BottomNav />
+    </View>
   );
 }
 

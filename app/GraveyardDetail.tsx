@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
+import AppHeader from "../components/ui/app-header";
 import { Colors } from "../constants/theme";
 
 type PlotStatus = "available" | "occupied" | "reserved";
@@ -51,13 +52,7 @@ export default function GraveyardDetail() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle} numberOfLines={1}>{name || "Graveyard"}</Text>
-        <AvatarButton size={36} />
-      </View>
+      <AppHeader title={name || "Graveyard"} right={<AvatarButton size={36} />} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.infoCard}>

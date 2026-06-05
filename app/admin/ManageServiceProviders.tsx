@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, Image, Pressable, StyleSheet, Text,
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import AppHeader from "../../components/ui/app-header";
 import { adminGetProviders, adminDeleteProvider } from "../utils/api";
 
 interface Provider { id: string; name: string; type: string; contact: string; available: boolean; image_url?: string }
@@ -59,15 +60,7 @@ export default function ManageServiceProviders() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Service Providers</Text>
-        <Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/ProviderForm", params: { mode: "create" } })}>
-          <Text style={styles.addBtnText}>+ Add</Text>
-        </Pressable>
-      </View>
+      <AppHeader title="Service Providers" right={<Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/ProviderForm", params: { mode: "create" } })}><Text style={styles.addBtnText}>+ Add</Text></Pressable>} />
 
       {loading ? <ActivityIndicator style={{ marginTop: 40 }} color="#164A40" /> : (
         <FlatList

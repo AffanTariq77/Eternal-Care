@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View }
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import AppHeader from "../../components/ui/app-header";
 import { adminGetGraveyards, adminDeleteGraveyard } from "../utils/api";
 
 interface Graveyard { id: string; name: string; city: string; totalPlots: number; availablePlots: number }
@@ -53,15 +54,7 @@ export default function ManageGraveyards() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Graveyards</Text>
-        <Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/GraveyardForm", params: { mode: "create" } })}>
-          <Text style={styles.addBtnText}>+ Add</Text>
-        </Pressable>
-      </View>
+      <AppHeader title="Graveyards" right={<Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/GraveyardForm", params: { mode: "create" } })}><Text style={styles.addBtnText}>+ Add</Text></Pressable>} />
 
       {loading ? <ActivityIndicator style={{ marginTop: 40 }} color="#164A40" /> : (
         <FlatList

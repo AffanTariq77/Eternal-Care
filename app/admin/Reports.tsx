@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/theme";
+import AppHeader from "../../components/ui/app-header";
 import { adminGetReports } from "../utils/api";
 
 interface ReportData {
@@ -35,12 +36,7 @@ export default function Reports() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Reports</Text>
-      </View>
+      <AppHeader title="Reports" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.dateRow}>

@@ -8,10 +8,12 @@ import {
   Text,
   View,
 } from "react-native";
+import { Colors } from "../constants/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
-import { Colors } from "../constants/theme";
+import AppHeader from "../components/ui/app-header";
 import { getToken } from "../utils/authStore";
+import BottomNav from "../components/ui/bottom-nav";
 
 type BookingStatus = "upcoming" | "completed" | "cancelled";
 
@@ -84,14 +86,9 @@ export default function BookingHistory() {
   const filtered = bookings.filter((b) => b.status === tab);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>My Bookings</Text>
-        <AvatarButton size={36} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: Colors.light.background || "#fff" }}>
+    <SafeAreaView style={[styles.safe, { flex: 1 }]} edges={["top", "left", "right"]}>
+      <AppHeader title="My Bookings" right={<AvatarButton size={36} />} />
 
       <View style={styles.tabs}>
         {TABS.map(({ key, label }) => (
@@ -152,6 +149,8 @@ export default function BookingHistory() {
         />
       )}
     </SafeAreaView>
+    <BottomNav />
+    </View>
   );
 }
 

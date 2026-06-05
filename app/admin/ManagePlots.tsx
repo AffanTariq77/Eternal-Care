@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View }
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import AppHeader from "../../components/ui/app-header";
 import { adminGetPlots } from "../utils/api";
 
 interface Plot { id: string; code: string; status: string; price: number; section: string; graveyard_id: string }
@@ -48,15 +49,7 @@ export default function ManagePlots() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Manage Plots</Text>
-        <Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/PlotForm", params: { mode: "create" } })}>
-          <Text style={styles.addBtnText}>+ Add</Text>
-        </Pressable>
-      </View>
+      <AppHeader title="Manage Plots" right={<Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/PlotForm", params: { mode: "create" } })}><Text style={styles.addBtnText}>+ Add</Text></Pressable>} />
 
       {loading ? <ActivityIndicator style={{ marginTop: 40 }} color="#164A40" /> : (
         <FlatList

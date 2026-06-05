@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
+import AppHeader from "../components/ui/app-header";
 import { Colors } from "../constants/theme";
 import { getToken } from "../utils/authStore";
 
@@ -13,14 +14,19 @@ const PKG_DAYS: Record<string, number> = {
 };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS_OF_WEEK = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
 function buildDays(count = 14) {
-  const days: { label: string; iso: string }[] = [];
+  const days: { label: string; dayLabel: string; iso: string }[] = [];
   const now = new Date();
   for (let i = 1; i <= count; i++) {
     const d = new Date(now);
     d.setDate(now.getDate() + i);
-    days.push({ label: `${d.getDate()} ${MONTHS[d.getMonth()]}`, iso: d.toISOString() });
+    days.push({
+      label: `${d.getDate()}`,
+      dayLabel: DAYS_OF_WEEK[d.getDay()],
+      iso: d.toISOString(),
+    });
   }
   return days;
 }
@@ -97,20 +103,16 @@ export default function GraveCareDetail() {
     (router as any).push("/Form");
   };
 
+  const selectedPkgObj = PACKAGES.find((p) => p.id === selectedPkg);
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Memorial Care</Text>
-        <AvatarButton size={36} />
-      </View>
+      <AppHeader title="Memorial Care" right={<AvatarButton size={36} />} />
 
       {activePlan && (
         <View style={styles.activeBanner}>
-          <View style={styles.activeBannerLeft}>
-            <Text style={styles.activeBannerTitle}>Active Plan: {activePlan.label}</Text>
+          <View>
+            <Text style={styles.activeBannerTitle}>✓ Active Plan: {activePlan.label}</Text>
             <Text style={styles.activeBannerSub}>
               Valid until {activePlan.expiry.toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}
             </Text>
@@ -124,46 +126,54 @@ export default function GraveCareDetail() {
           Professional grave cleaning and maintenance carried out with respect, care, and devotion. Choose a plan that suits your needs.
         </Text>
 
-        <Text style={styles.sectionTitle}>Choose a Package</Text>
-        {PACKAGES.map((pkg) => (
-          <Pressable
-            key={pkg.id}
-            style={[styles.pkgCard, selectedPkg === pkg.id && styles.pkgCardActive]}
-            onPress={() => setSelectedPkg(pkg.id)}
-          >
-            <View style={styles.pkgHeader}>
-              <View>
-                <Text style={[styles.pkgLabel, selectedPkg === pkg.id && styles.pkgLabelActive]}>{pkg.label}</Text>
-                {pkg.recommended && (
-                  <View style={styles.recBadge}><Text style={styles.recText}>Recommended</Text></View>
-                )}
+        <Text style={styles.sectionLabel}>CHOOSE A PACKAGE</Text>
+        {PACKAGES.map((pkg) => {
+          const active = selectedPkg === pkg.id;
+          return (
+            <Pressable key={pkg.id} style={[styles.pkgCard, active && styles.pkgCardActive]} onPress={() => setSelectedPkg(pkg.id)}>
+              <View style={styles.pkgHeader}>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.pkgLabelRow}>
+                    <Text style={[styles.pkgLabel, active && styles.pkgLabelActive]}>{pkg.label}</Text>
+                    {pkg.recommended && <View style={styles.recBadge}><Text style={styles.recText}>Recommended</Text></View>}
+                  </View>
+                  <Text style={[styles.pkgPrice, active && styles.pkgPriceActive]}>PKR {pkg.price.toLocaleString()}</Text>
+                </View>
+                <View style={[styles.radioCircle, active && styles.radioCircleActive]}>
+                  {active && <View style={styles.radioDot} />}
+                </View>
               </View>
-              <Text style={[styles.pkgPrice, selectedPkg === pkg.id && styles.pkgPriceActive]}>
-                PKR {pkg.price.toLocaleString()}
-              </Text>
-            </View>
-            <View style={styles.includesList}>
-              {pkg.includes.map((item) => (
-                <Text key={item} style={[styles.includeItem, selectedPkg === pkg.id && styles.includeItemActive]}>
-                  • {item}
-                </Text>
-              ))}
-            </View>
-          </Pressable>
-        ))}
-
-        <Text style={styles.sectionTitle}>Select First Service Date</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
-          {DAYS.map((d) => (
-            <Pressable
-              key={d.iso}
-              style={[styles.dayBtn, selectedDay === d.iso && styles.dayBtnActive]}
-              onPress={() => setSelectedDay(d.iso)}
-            >
-              <Text style={[styles.dayText, selectedDay === d.iso && styles.dayTextActive]}>{d.label}</Text>
+              <View style={styles.includesList}>
+                {pkg.includes.map((item) => (
+                  <Text key={item} style={[styles.includeItem, active && styles.includeItemActive]}>
+                    ✓  {item}
+                  </Text>
+                ))}
+              </View>
             </Pressable>
-          ))}
+          );
+        })}
+
+        <Text style={styles.sectionLabel}>FIRST SERVICE DATE</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll} contentContainerStyle={{ gap: 10 }}>
+          {DAYS.map((d) => {
+            const active = selectedDay === d.iso;
+            return (
+              <Pressable key={d.iso} style={[styles.dayBtn, active && styles.dayBtnActive]} onPress={() => setSelectedDay(d.iso)}>
+                <Text style={[styles.dayDow, active && styles.dayDowActive]}>{d.dayLabel}</Text>
+                <Text style={[styles.dayNum, active && styles.dayNumActive]}>{d.label}</Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
+
+        {/* Summary strip */}
+        {selectedPkgObj && (
+          <View style={styles.summaryStrip}>
+            <Text style={styles.summaryLabel}>{selectedPkgObj.label}</Text>
+            <Text style={styles.summaryPrice}>PKR {selectedPkgObj.price.toLocaleString()}</Text>
+          </View>
+        )}
 
         <Pressable style={styles.confirmBtn} onPress={handleConfirm}>
           <Text style={styles.confirmBtnText}>Confirm Package</Text>
@@ -174,55 +184,68 @@ export default function GraveCareDetail() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.light.background || "#fff" },
-  header: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 18, paddingTop: 8, marginTop: 16, marginBottom: 8,
-  },
-  back: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: "#000",
-    alignItems: "center", justifyContent: "center",
-  },
-  backText: { color: "#fff", fontWeight: "700" },
-  headerTitle: { flex: 1, marginLeft: 12, fontSize: 18, fontWeight: "800" },
+  safe: { flex: 1, backgroundColor: "#f7f8fa" },
   activeBanner: {
-    marginHorizontal: 18, marginBottom: 10,
+    marginHorizontal: 16, marginBottom: 8,
     backgroundColor: "#d7efe6", borderRadius: 14, padding: 14,
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     borderWidth: 1, borderColor: "#164A40",
   },
-  activeBannerLeft: { flex: 1 },
   activeBannerTitle: { color: "#164A40", fontWeight: "800", fontSize: 14 },
   activeBannerSub: { color: "#164A40", fontSize: 12, marginTop: 2, opacity: 0.8 },
   activeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#22c55e", marginLeft: 10 },
-  content: { paddingHorizontal: 18, paddingBottom: 40 },
-  desc: { color: "#555", lineHeight: 22, marginBottom: 20, marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", marginBottom: 12, marginTop: 8 },
+  content: { paddingHorizontal: 16, paddingBottom: 50 },
+  desc: { color: "#777", lineHeight: 22, marginBottom: 20, marginTop: 4, fontSize: 14 },
+  sectionLabel: { fontSize: 11, fontWeight: "700", color: "#999", letterSpacing: 1, textTransform: "uppercase", marginBottom: 12, marginTop: 4 },
+
+  // Package cards
   pkgCard: {
-    borderWidth: 2, borderColor: "#e5e7eb", borderRadius: 14, padding: 16, marginBottom: 14,
+    borderWidth: 1.5, borderColor: "#e9ecef", borderRadius: 16, padding: 16, marginBottom: 12,
     backgroundColor: "#fff",
+    shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6, elevation: 1,
   },
   pkgCardActive: { borderColor: "#164A40", backgroundColor: "#164A40" },
-  pkgHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 },
-  pkgLabel: { fontSize: 16, fontWeight: "700", color: "#111" },
+  pkgHeader: { flexDirection: "row", alignItems: "flex-start", marginBottom: 12 },
+  pkgLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  pkgLabel: { fontSize: 16, fontWeight: "800", color: "#111" },
   pkgLabelActive: { color: "#fff" },
-  pkgPrice: { fontSize: 15, fontWeight: "800", color: "#164A40" },
+  pkgPrice: { fontSize: 20, fontWeight: "900", color: "#164A40" },
   pkgPriceActive: { color: "#cfe9d8" },
-  recBadge: { backgroundColor: "#fef3c7", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4, alignSelf: "flex-start" },
-  recText: { fontSize: 11, color: "#92400e", fontWeight: "600" },
-  includesList: { gap: 4 },
-  includeItem: { color: "#444", fontSize: 13, lineHeight: 20 },
-  includeItemActive: { color: "#cfe9d8" },
-  dayScroll: { marginBottom: 24 },
+  recBadge: { backgroundColor: "#fef3c7", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: "flex-start" },
+  recText: { fontSize: 11, color: "#92400e", fontWeight: "700" },
+  radioCircle: {
+    width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: "#ccc",
+    alignItems: "center", justifyContent: "center", marginLeft: 10, marginTop: 2,
+  },
+  radioCircleActive: { borderColor: "#cfe9d8" },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#cfe9d8" },
+  includesList: { gap: 6 },
+  includeItem: { color: "#555", fontSize: 13, lineHeight: 19 },
+  includeItemActive: { color: "rgba(255,255,255,0.85)" },
+
+  // Date picker
+  dayScroll: { marginBottom: 20 },
   dayBtn: {
-    borderWidth: 1, borderColor: "#164A40", borderRadius: 10,
-    paddingVertical: 8, paddingHorizontal: 14, marginRight: 8,
+    borderWidth: 1.5, borderColor: "#e9ecef", borderRadius: 12,
+    paddingVertical: 10, paddingHorizontal: 14, alignItems: "center", backgroundColor: "#fff",
+    minWidth: 54,
   },
-  dayBtnActive: { backgroundColor: "#164A40" },
-  dayText: { color: "#164A40", fontWeight: "600", fontSize: 13 },
-  dayTextActive: { color: "#fff" },
+  dayBtnActive: { backgroundColor: "#164A40", borderColor: "#164A40" },
+  dayDow: { fontSize: 11, color: "#999", fontWeight: "600", marginBottom: 2 },
+  dayDowActive: { color: "rgba(255,255,255,0.7)" },
+  dayNum: { fontSize: 16, fontWeight: "800", color: "#111" },
+  dayNumActive: { color: "#fff" },
+
+  // Summary + confirm
+  summaryStrip: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    backgroundColor: "#eaf4ee", borderRadius: 12, padding: 14, marginBottom: 14,
+  },
+  summaryLabel: { fontSize: 14, fontWeight: "700", color: "#164A40" },
+  summaryPrice: { fontSize: 16, fontWeight: "900", color: "#164A40" },
   confirmBtn: {
-    backgroundColor: "#164A40", borderRadius: 24, paddingVertical: 16, alignItems: "center",
+    backgroundColor: "#164A40", borderRadius: 16, paddingVertical: 16, alignItems: "center",
+    shadowColor: "#164A40", shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
-  confirmBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  confirmBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
 });

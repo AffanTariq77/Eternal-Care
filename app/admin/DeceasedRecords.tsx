@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextIn
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import AppHeader from "../../components/ui/app-header";
 import { adminGetDeceased } from "../utils/api";
 
 interface Deceased { id: string; name: string; cnic: string; burialDate: string; graveyard: string; plotCode: string }
@@ -49,15 +50,7 @@ export default function DeceasedRecords() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Deceased Records</Text>
-        <Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/DeceasedForm", params: { mode: "create" } })}>
-          <Text style={styles.addBtnText}>+ Add</Text>
-        </Pressable>
-      </View>
+      <AppHeader title="Deceased Records" right={<Pressable style={styles.addBtn} onPress={() => (router as any).push({ pathname: "/admin/DeceasedForm", params: { mode: "create" } })}><Text style={styles.addBtnText}>+ Add</Text></Pressable>} />
 
       <View style={styles.searchWrap}>
         <TextInput

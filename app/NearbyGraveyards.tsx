@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import AvatarButton from "../components/ui/avatar-button";
+import AppHeader from "../components/ui/app-header";
 import SocialSvg from "../components/ui/social-svg";
 import SearchIcon from "../assets/images/search.svg";
 import LeafletMap, { LeafletMapHandle } from "../components/ui/leaflet-map";
@@ -101,13 +102,7 @@ export default function NearbyGraveyards() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Nearby Graveyards</Text>
-        <AvatarButton size={36} />
-      </View>
+      <AppHeader title="Nearby Graveyards" right={<AvatarButton size={36} />} />
 
       <View style={styles.searchWrap}>
         <TextInput

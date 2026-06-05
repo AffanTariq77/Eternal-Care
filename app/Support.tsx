@@ -16,6 +16,7 @@ import SocialSvg from "../components/ui/social-svg";
 import BellIcon from "../assets/images/bell.svg";
 import GetInTouchIcon from "../assets/images/Get-in-touch-bro.svg";
 import { Colors } from "../constants/theme";
+import BottomNav from "../components/ui/bottom-nav";
 
 export default function Support() {
   const router = useRouter();
@@ -48,7 +49,8 @@ export default function Support() {
   }, [first, last, email, message]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={{ flex: 1, backgroundColor: Colors.light.background || "#fff" }}>
+    <SafeAreaView style={[styles.safe, { flex: 1 }]} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -62,12 +64,9 @@ export default function Support() {
             <Pressable style={styles.back} onPress={() => router.back()}>
               <Text style={styles.backChevron}>{"<"}</Text>
             </Pressable>
-            <View style={styles.headerRightSmall}>
-              <SocialSvg
-                Icon={BellIcon}
-                size={20}
-              />
-            </View>
+            <Pressable onPress={() => (router as any).push("/Notifications")} style={styles.headerRightSmall}>
+              <SocialSvg Icon={BellIcon} size={20} />
+            </Pressable>
           </View>
 
           <Text style={styles.helpSmall}>Need Help?</Text>
@@ -130,6 +129,8 @@ export default function Support() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    <BottomNav />
+    </View>
   );
 }
 

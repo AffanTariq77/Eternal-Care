@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/theme";
+import AppHeader from "../../components/ui/app-header";
 import { adminGetBookings, adminUpdateBooking } from "../utils/api";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -80,15 +81,10 @@ export default function ManageBookings() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Manage Bookings</Text>
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{bookings.filter(b => b.status === 'pending').length} pending</Text>
-        </View>
-      </View>
+      <AppHeader
+        title="Manage Bookings"
+        right={<View style={styles.countBadge}><Text style={styles.countText}>{bookings.filter(b => b.status === 'pending').length} pending</Text></View>}
+      />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
         {FILTERS.map((f) => (

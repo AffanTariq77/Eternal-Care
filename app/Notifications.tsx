@@ -3,8 +3,10 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
+import AppHeader from "../components/ui/app-header";
 import { Colors } from "../constants/theme";
 import { getToken } from "../utils/authStore";
+import BottomNav from "../components/ui/bottom-nav";
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
@@ -99,14 +101,9 @@ export default function Notifications() {
   const unreadCount = notifs.filter((n) => !n.read).length;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        <AvatarButton size={36} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: Colors.light.background || "#fff" }}>
+    <SafeAreaView style={[styles.safe, { flex: 1 }]} edges={["top", "left", "right"]}>
+      <AppHeader title="Notifications" right={<AvatarButton size={36} />} />
 
       {unreadCount > 0 && (
         <Pressable style={styles.markAllWrap} onPress={markAllRead}>
@@ -140,6 +137,8 @@ export default function Notifications() {
       />
       )}
     </SafeAreaView>
+    <BottomNav />
+    </View>
   );
 }
 

@@ -12,7 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarButton from "../components/ui/avatar-button";
+import AppHeader from "../components/ui/app-header";
 import { Colors } from "../constants/theme";
+import BottomNav from "../components/ui/bottom-nav";
 
 interface Reciter {
   id: string;
@@ -73,14 +75,9 @@ export default function ReciterList() {
   });
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable style={styles.back} onPress={() => (router as any).back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Choose a Reciter</Text>
-        <AvatarButton size={36} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: Colors.light.background || "#fff" }}>
+    <SafeAreaView style={[styles.safe, { flex: 1 }]} edges={["top", "left", "right"]}>
+      <AppHeader title="Choose a Reciter" right={<AvatarButton size={36} />} />
 
       <View style={styles.searchWrap}>
         <TextInput
@@ -150,6 +147,8 @@ export default function ReciterList() {
         />
       )}
     </SafeAreaView>
+    <BottomNav />
+    </View>
   );
 }
 

@@ -108,7 +108,7 @@ const Input: React.FC<{
         </Pressable>
         <View style={styles.headerRight}>
           <AvatarButton size={36} />
-          <SocialSvg Icon={BellIcon} size={20} />
+          <Pressable onPress={() => (router as any).push("/Notifications")}><SocialSvg Icon={BellIcon} size={20} /></Pressable>
         </View>
       </View>
 
