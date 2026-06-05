@@ -154,20 +154,7 @@ const Input: React.FC<{
             valueRef={cityRef}
             onBlurCommit={setCity}
           />
-          {/* Package & Date fields — editable text fields instead of inline pickers */}
-          <Input
-            placeholder="Package (e.g. Basic, gravecare_1d or pkg_basic)"
-            defaultValue={packageRef.current || selectedPackage || undefined}
-            valueRef={packageRef as any}
-            onBlurCommit={(v) => { packageRef.current = v; setSelectedPackage(v || null); }}
-          />
-
-          <Input
-            placeholder="Date (ISO or YYYY-MM-DD)"
-            defaultValue={dateRef.current || (selectedDate ? new Date(selectedDate).toISOString() : undefined)}
-            valueRef={dateRef as any}
-            onBlurCommit={(v) => { dateRef.current = v; setSelectedDate(v || null); }}
-          />
+          {/* Package & Date are set by the booking flow — hidden from user */}
 
           <View style={styles.checkboxRow}>
             <Pressable

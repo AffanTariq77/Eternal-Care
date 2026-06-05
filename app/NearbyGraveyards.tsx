@@ -16,6 +16,7 @@ import AvatarButton from "../components/ui/avatar-button";
 import SocialSvg from "../components/ui/social-svg";
 import SearchIcon from "../assets/images/search.svg";
 import LeafletMap, { LeafletMapHandle } from "../components/ui/leaflet-map";
+import { openDirections } from "../utils/mapNavigation";
 import { Colors } from "../constants/theme";
 
 const { height } = Dimensions.get("window");
@@ -181,9 +182,17 @@ export default function NearbyGraveyards() {
                   <View style={styles.mapCardBadge}>
                     <Text style={styles.mapCardBadgeText}>{item.availablePlots} available</Text>
                   </View>
-                  <Pressable style={styles.mapCardBtn} onPress={() => navigateToDetail(item)}>
-                    <Text style={styles.mapCardBtnText}>View Plots</Text>
-                  </Pressable>
+                  <View style={styles.mapCardBtnRow}>
+                    <Pressable style={[styles.mapCardBtn, { flex: 1 }]} onPress={() => navigateToDetail(item)}>
+                      <Text style={styles.mapCardBtnText}>View Plots</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.mapCardBtn, styles.mapCardDirBtn, { flex: 1 }]}
+                      onPress={() => openDirections(item.lat, item.lng, item.name)}
+                    >
+                      <Text style={styles.mapCardBtnText}>Directions</Text>
+                    </Pressable>
+                  </View>
                 </Pressable>
               )}
             />
@@ -211,6 +220,12 @@ export default function NearbyGraveyards() {
                   onPress={() => { setViewMode("map"); focusGraveyard(item); }}
                 >
                   <Text style={styles.viewMapBtnText}>View on Map</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.directionsBtn}
+                  onPress={() => openDirections(item.lat, item.lng, item.name)}
+                >
+                  <Text style={styles.directionsBtnText}>📍 Get Directions</Text>
                 </Pressable>
               </View>
               <View style={styles.distanceWrap}>
@@ -271,8 +286,12 @@ const styles = StyleSheet.create({
   mapCardCity: { color: "#666", fontSize: 12, marginBottom: 8 },
   mapCardBadge: { backgroundColor: "#d7efe6", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: "flex-start", marginBottom: 10 },
   mapCardBadgeText: { color: "#164A40", fontSize: 11, fontWeight: "600" },
+  mapCardBtnRow: { flexDirection: "row", gap: 6 },
   mapCardBtn: { backgroundColor: "#164A40", borderRadius: 10, paddingVertical: 7, alignItems: "center" },
+  mapCardDirBtn: { backgroundColor: "#22c55e" },
   mapCardBtnText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+  directionsBtn: { marginTop: 6, borderWidth: 1, borderColor: "#22c55e", borderRadius: 8, paddingVertical: 6, alignItems: "center" },
+  directionsBtnText: { color: "#22c55e", fontSize: 12, fontWeight: "700" },
   list: { paddingHorizontal: 18, paddingBottom: 30 },
   card: {
     backgroundColor: "#fff", borderRadius: 14, padding: 16, marginBottom: 14,

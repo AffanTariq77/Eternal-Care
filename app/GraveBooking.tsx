@@ -55,6 +55,13 @@ export default function GraveBooking() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        <Pressable
+          style={styles.nearbyBtn}
+          onPress={() => (router as any).push("/NearbyGraveyards")}
+        >
+          <Text style={styles.nearbyBtnText}>📍 Find Nearby Graveyards</Text>
+        </Pressable>
+
         <View style={styles.bannerWrap}>
           <View style={styles.bannerInner}>
             <SocialSvg
@@ -164,6 +171,17 @@ const styles = StyleSheet.create({
   },
   searchPlaceholder: { color: "#999", flex: 1 },
   searchIcons: { flexDirection: "row", gap: 12, marginLeft: 8 },
+  nearbyBtn: {
+    width: "90%",
+    backgroundColor: "#164A40",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 14,
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  nearbyBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   bannerWrap: {
     width: "90%",
     borderRadius: 12,

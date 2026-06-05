@@ -15,8 +15,8 @@ export default function PlotForm() {
 
   const codeRef = useRef(initCode || "");
   const sectionRef = useRef("");
-  const rowRef = useRef("");
-  const colRef = useRef("");
+  const latRef = useRef("");
+  const lngRef = useRef("");
   const priceRef = useRef(initPrice || "");
   const [status, setStatus] = useState(initStatus || "available");
   const [saving, setSaving] = useState(false);
@@ -43,6 +43,8 @@ export default function PlotForm() {
       const payload: any = {
         plot_code: codeRef.current.trim(),
         section: sectionRef.current || undefined,
+        lat: latRef.current ? Number(latRef.current) : undefined,
+        lng: lngRef.current ? Number(lngRef.current) : undefined,
         price: Number(priceRef.current) || 0,
         status,
       };
@@ -96,8 +98,8 @@ export default function PlotForm() {
         {[
           { label: "Plot Code *", ref: codeRef, placeholder: "e.g. A1" },
           { label: "Section", ref: sectionRef, placeholder: "e.g. Section A" },
-          { label: "Row", ref: rowRef, placeholder: "e.g. 3" },
-          { label: "Column", ref: colRef, placeholder: "e.g. 5" },
+          { label: "Latitude", ref: latRef, placeholder: "e.g. 31.5204", kb: "decimal-pad" },
+          { label: "Longitude", ref: lngRef, placeholder: "e.g. 74.3587", kb: "decimal-pad" },
           { label: "Price (PKR)", ref: priceRef, placeholder: "e.g. 15000", kb: "numeric" },
         ].map(({ label, ref: r, placeholder, kb }) => (
           <View key={label} style={styles.fieldWrap}>

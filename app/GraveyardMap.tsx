@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import LeafletMap from "../components/ui/leaflet-map";
 import { Colors } from "../constants/theme";
+import { openDirections } from "../utils/mapNavigation";
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "";
 
@@ -88,6 +89,12 @@ export default function GraveyardMap() {
               </View>
               <Text style={styles.statTotal}>{graveyard.total_plots} total plots</Text>
             </View>
+            <Pressable
+              style={styles.directionsBtn}
+              onPress={() => openDirections(graveyard.lat, graveyard.lng, name as string)}
+            >
+              <Text style={styles.directionsBtnText}>📍 Get Directions</Text>
+            </Pressable>
             <Pressable style={styles.detailBtn} onPress={() => (router as any).back()}>
               <Text style={styles.detailBtnText}>Back to Plots</Text>
             </Pressable>
@@ -124,6 +131,8 @@ const styles = StyleSheet.create({
   statBadge: { backgroundColor: "#d7efe6", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   statBadgeText: { color: "#164A40", fontSize: 13, fontWeight: "600" },
   statTotal: { color: "#888", fontSize: 13 },
+  directionsBtn: { backgroundColor: "#22c55e", borderRadius: 24, paddingVertical: 12, alignItems: "center", marginBottom: 10 },
+  directionsBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   detailBtn: { backgroundColor: "#164A40", borderRadius: 24, paddingVertical: 12, alignItems: "center" },
   detailBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
 });
