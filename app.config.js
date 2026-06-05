@@ -1,7 +1,7 @@
 module.exports = {
   expo: {
     name: "Eternal Care",
-    slug: "Eternal-Care",
+    slug: "eternal-care",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/Eternal-Care-logo-black3.png",
@@ -78,7 +78,7 @@ module.exports = {
     },
     extra: {
       eas: {
-        projectId: "f791125e-6317-4543-a6f1-4b23fd48cd62",
+        projectId: "9ad88895-aef1-4f6f-ae9d-869873458460",
       },
     },
   },
